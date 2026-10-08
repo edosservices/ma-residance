@@ -1,0 +1,39 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+    --color-paper: #f3efe7;
+    --color-ink: #1c1917;
+    --color-muted: #6f675f;
+    --color-card: #fffdf9;
+    --color-line: #e6dfd4;
+    --color-brand: #0e6b52;
+    --color-brand-dark: #0a5340;
+    --color-sand: #efe6d6;
+    --color-amber: #9a6700;
+    --color-danger: #a33b32;
+}
+
+@layer components {
+    .field {
+        @apply w-full rounded-xl border border-line bg-white px-3 py-3 text-base text-ink outline-none focus:border-brand;
+    }
+    .btn {
+        @apply inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-semibold transition active:scale-[0.99];
+    }
+    .btn-primary {
+        @apply bg-brand text-white hover:bg-brand-dark;
+    }
+    .btn-ghost {
+        @apply border border-line bg-white text-ink;
+    }
+    .btn-danger {
+        @apply bg-danger text-white;
+    }
+    .card {
+        @apply rounded-2xl border border-line bg-card p-4 shadow-sm;
+    }
+}
