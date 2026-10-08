@@ -1,14 +1,15 @@
 @extends('layouts.guest')
 @section('content')
-    <h1 class="text-3xl font-semibold">Espace bailleur</h1>
-    <form method="POST" action="{{ route('register.landlord') }}" class="mt-6 space-y-3">
+    <h1 class="h3">Créer mon espace bailleur</h1>
+    <p class="text-muted">Votre organisation reste isolée des autres bailleurs.</p>
+    <form method="POST" action="{{ route('register.landlord') }}" class="d-grid gap-3 mt-4">
         @csrf
-        <input class="field" name="name" placeholder="Votre nom" value="{{ old('name') }}" required>
-        <input class="field" name="phone" placeholder="Téléphone" value="{{ old('phone') }}" required>
-        <input class="field" type="email" name="email" placeholder="Email (facultatif)" value="{{ old('email') }}">
-        <input class="field" name="organization_name" placeholder="Nom de la résidence" value="{{ old('organization_name') }}" required>
-        <input class="field" type="password" name="password" placeholder="Mot de passe" required>
-        <input class="field" type="password" name="password_confirmation" placeholder="Confirmer" required>
-        <button class="btn btn-primary w-full">Créer mon organisation</button>
+        <label class="small">Votre nom<input class="field mt-1" name="name" value="{{ old('name') }}" required></label>
+        <label class="small">Téléphone<input class="field mt-1" name="phone" value="{{ old('phone') }}" required></label>
+        <label class="small">Email facultatif<input class="field mt-1" type="email" name="email" value="{{ old('email') }}"></label>
+        <label class="small">Nom de la résidence<input class="field mt-1" name="organization_name" value="{{ old('organization_name') }}" required></label>
+        <label class="small">Mot de passe<input class="field mt-1" type="password" name="password" required></label>
+        <label class="small">Confirmer<input class="field mt-1" type="password" name="password_confirmation" required></label>
+        <button class="btn btn-primary">Créer mon organisation</button>
     </form>
 @endsection

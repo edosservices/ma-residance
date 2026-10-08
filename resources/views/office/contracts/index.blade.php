@@ -1,11 +1,20 @@
 @extends('layouts.shell')
 @section('content')
-    <h1 class="text-2xl font-semibold">Contrats</h1>
+    <x-page-header title="Contrats" subtitle="Loyers, échéances et prorata">
+        <x-slot:actions>
+            @if (allows('contracts.manage'))
+                <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createContract"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nouveau contrat</button>
+            @endif
+            <a class="btn btn-ghost" href="{{ route('office.requests.index') }}">Demandes</a>
+        </x-slot:actions>
+    </x-page-header>
     @if (allows('contracts.manage'))
-        <details class="card mt-4">
-            <summary class="cursor-pointer font-semibold">Nouveau contrat</summary>
-            <form method="POST" action="{{ route('office.contracts.store') }}" class="mt-3 space-y-2">
+        <div class="modal fade" id="createContract" tabindex="-1" aria-labelledby="createContractLabel" @if ($errors->any()) data-open-on-load @endif>
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <form method="POST" action="{{ route('office.contracts.store') }}" class="modal-content">
                 @csrf
+                <div class="modal-header"><h2 class="modal-title h5" id="createContractLabel">Nouveau contrat</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button></div>
+                <div class="modal-body d-grid gap-2">
                 <select class="field" name="tenant_id" required>
                     <option value="">Locataire</option>
                     @foreach ($tenants as $tenant)
@@ -26,9 +35,11 @@
                         <option>{{ $currency }}</option>
                     @endforeach
                 </select>
-                <button class="btn btn-primary w-full">Créer</button>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Annuler</button><button class="btn btn-primary">Créer</button></div>
             </form>
-        </details>
+            </div>
+        </div>
     @endif
     <div class="mt-4 space-y-2">
         @foreach ($contracts as $contract)

@@ -1,11 +1,32 @@
 @props(['tone' => 'neutral'])
 @php
-    $tones = [
-        'neutral' => 'bg-sand text-ink',
-        'good' => 'bg-emerald-100 text-emerald-900',
-        'warn' => 'bg-amber-100 text-amber-950',
-        'bad' => 'bg-red-100 text-red-900',
-        'info' => 'bg-sky-100 text-sky-950',
+    $label = trim(preg_replace('/\s+/', ' ', strip_tags((string) $slot)) ?? '');
+    $key = mb_strtolower($label);
+    $visual = match (true) {
+        $key === 'payé' || str_starts_with($key, 'payé') => 'paid',
+        str_contains($key, 'retard') => 'late',
+        str_contains($key, 'attente') || str_contains($key, 'partiel') || str_contains($key, 'signal') => 'pending',
+        str_contains($key, 'cours') || str_contains($key, 'intervention') || str_contains($key, 'occup') || str_contains($key, 'vérif') || str_contains($key, 'confirm') => 'progress',
+        str_contains($key, 'disponib') => 'free',
+        str_contains($key, 'maintenance') => 'maintenance',
+        default => $tone,
+    };
+    $icons = [
+        'paid' => 'check-circle-fill',
+        'good' => 'check-circle-fill',
+        'pending' => 'hourglass-split',
+        'warn' => 'hourglass-split',
+        'late' => 'exclamation-circle-fill',
+        'bad' => 'exclamation-circle-fill',
+        'progress' => 'arrow-repeat',
+        'info' => 'info-circle-fill',
+        'free' => 'door-open',
+        'neutral' => 'circle',
+        'maintenance' => 'tools',
     ];
+    $icon = $icons[$visual] ?? 'circle';
 @endphp
-<span {{ $attributes->merge(['class' => 'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold '.($tones[$tone] ?? $tones['neutral'])]) }}>{{ $slot }}</span>
+<span {{ $attributes->merge(['class' => 'mr-badge mr-badge-'.$visual]) }} data-bs-toggle="tooltip" title="{{ $label }}">
+    <i class="bi bi-{{ $icon }}" aria-hidden="true"></i>
+    <span>{{ $slot }}</span>
+</span>

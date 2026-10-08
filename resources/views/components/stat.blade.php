@@ -1,8 +1,10 @@
-@props(['label', 'value', 'hint' => null])
-<div {{ $attributes->merge(['class' => 'card']) }}>
-    <p class="text-[11px] font-semibold uppercase tracking-wider text-muted">{{ $label }}</p>
-    <p class="mt-1 text-2xl font-semibold tracking-tight">{{ $value }}</p>
-    @if ($hint)
-        <p class="mt-1 text-sm text-muted">{{ $hint }}</p>
-    @endif
-</div>
+@props(['label', 'value', 'hint' => null, 'href' => null, 'icon' => null, 'tone' => 'green'])
+@php $tag = $href ? 'a' : 'div'; @endphp
+<{{ $tag }} @if ($href) href="{{ $href }}" @endif {{ $attributes->merge(['class' => 'stat-card stat-'.$tone]) }}>
+    <span class="label">
+        @if ($icon)<i class="bi bi-{{ $icon }}" aria-hidden="true"></i>@endif
+        {{ $label }}
+    </span>
+    <span class="value">{{ $value }}</span>
+    @if ($hint)<span class="hint">{{ $hint }}</span>@endif
+</{{ $tag }}>

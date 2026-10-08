@@ -45,7 +45,7 @@ class ReportingService
         };
     }
 
-    public function dashboard(Organization $organization, string $period): array
+    public function dashboard(Organization $organization, string $period, ?int $propertyId = null): array
     {
         $today = CarbonImmutable::now($organization->timezone)->startOfDay();
         $this->billing->refreshOpenInvoices($organization, $today);
@@ -55,8 +55,8 @@ class ReportingService
         return [
             'period' => $period,
             'period_label' => $label,
-            'stock' => $this->stock($organization),
-            'currencies' => $this->financials($organization, $start, $end),
+            'stock' => $this->stock($organization, $propertyId),
+            'currencies' => $this->financials($organization, $start, $end, $propertyId),
             'held' => $this->held($organization),
             'remitted' => $this->remitted($organization, $start, $end),
             'overdue' => $late['invoices'],
@@ -75,9 +75,11 @@ class ReportingService
     /**
      * @return array<string, int|float>
      */
-    public function stock(Organization $organization): array
+    public function stock(Organization $organization, ?int $propertyId = null): array
     {
-        $units = Unit::withoutGlobalScopes()->where('organization_id', $organization->id);
+        $units = Unit::withoutGlobalScopes()
+            ->where('organization_id', $organization->id)
+            ->when($propertyId, fn ($query) => $query->where('property_id', $propertyId));
         $total = (clone $units)->count();
         $unavailable = (clone $units)->where('status', UnitStatus::Unavailable)->count();
         $occupied = (clone $units)->whereIn('status', [UnitStatus::Occupied, UnitStatus::DepartureScheduled])->count();
@@ -86,13 +88,16 @@ class ReportingService
         $rentable = max(1, $total - $unavailable);
 
         return [
-            'properties' => Property::withoutGlobalScopes()->where('organization_id', $organization->id)->where('status', 'active')->count(),
+            'properties' => $propertyId
+                ? 1
+                : Property::withoutGlobalScopes()->where('organization_id', $organization->id)->where('status', 'active')->count(),
             'units' => $total,
             'occupied' => $occupied,
             'free' => $free,
             'maintenance' => $maintenance,
             'tenants' => Contract::withoutGlobalScopes()
                 ->where('organization_id', $organization->id)
+                ->when($propertyId, fn ($query) => $query->where('property_id', $propertyId))
                 ->whereIn('status', [ContractStatus::Active->value, ContractStatus::MoveOutRequested->value])
                 ->pluck('tenant_id')
                 ->unique()

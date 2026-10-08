@@ -11,9 +11,17 @@ use App\Models\AuditLog;
 use App\Models\Organization;
 use App\Models\Payment;
 use App\Models\PlatformSetting;
+use App\Models\Property;
+use App\Models\Tenant;
+use App\Models\Unit;
 use App\Models\User;
 use App\Services\AuditLogger;
+use App\Services\RegistrationService;
+use App\Support\DomainException;
+use App\Support\Phone;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 
 class AdminController extends Controller
 {
@@ -22,17 +30,52 @@ class AdminController extends Controller
         return view('admin.dashboard', [
             'organizations' => Organization::query()->count(),
             'activeOrganizations' => Organization::query()->where('status', OrganizationStatus::Active)->count(),
+            'suspendedOrganizations' => Organization::query()->where('status', OrganizationStatus::Suspended)->count(),
             'users' => User::query()->count(),
             'suspendedUsers' => User::query()->where('status', UserStatus::Suspended)->count(),
+            'tenants' => Tenant::withoutGlobalScopes()->count(),
+            'properties' => Property::withoutGlobalScopes()->count(),
+            'units' => Unit::withoutGlobalScopes()->count(),
             'approvedPayments' => Payment::withoutGlobalScopes()->where('status', 'approved')->where('kind', 'payment')->count(),
+            'recentOrganizations' => Organization::query()->withCount(['properties', 'units', 'tenants'])->latest()->limit(6)->get(),
+            'activity' => AuditLog::withoutGlobalScopes()->with('user')->latest('id')->limit(8)->get(),
         ]);
     }
 
     public function organizations()
     {
-        $organizations = Organization::query()->withCount('members')->latest()->paginate(20);
+        $organizations = Organization::query()->withCount(['members', 'properties', 'units', 'tenants'])->latest()->paginate(20);
 
         return view('admin.organizations', compact('organizations'));
+    }
+
+    public function storeOrganization(Request $request, RegistrationService $registration, AuditLogger $audit)
+    {
+        try {
+            $request->merge(['phone' => Phone::normalize((string) $request->input('phone'))]);
+        } catch (DomainException $exception) {
+            throw ValidationException::withMessages(['phone' => $exception->getMessage()]);
+        }
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'phone' => ['required', 'string', 'max:20', 'unique:users,phone'],
+            'email' => ['nullable', 'email', 'max:160', 'unique:users,email'],
+            'password' => ['required', 'confirmed', Password::min(8)],
+            'organization_name' => ['required', 'string', 'max:160'],
+        ]);
+
+        $user = $registration->registerLandlord(
+            $data['name'],
+            $data['phone'],
+            $data['email'] ?? null,
+            $data['password'],
+            $data['organization_name'],
+        );
+
+        $audit->log(null, $request->user(), 'organization.created', $user, 'A créé le compte bailleur '.$user->name.' pour '.$data['organization_name'].'.');
+
+        return back()->with('status', 'Compte bailleur créé. Il peut se connecter avec son téléphone.');
     }
 
     public function organizationStatus(Organization $organization, AuditLogger $audit, Request $request)

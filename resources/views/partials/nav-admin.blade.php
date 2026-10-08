@@ -1,16 +1,18 @@
 @php
     $links = [
-        [route('admin.dashboard'), 'Vue', request()->routeIs('admin.dashboard')],
-        [route('admin.organizations'), 'Bailleurs', request()->routeIs('admin.organizations')],
-        [route('admin.users'), 'Comptes', request()->routeIs('admin.users')],
-        [route('admin.audit'), 'Journal', request()->routeIs('admin.audit')],
-        [route('admin.settings'), 'Réglages', request()->routeIs('admin.settings')],
+        ['admin.dashboard', route('admin.dashboard'), 'Tableau de bord', 'speedometer2'],
+        ['admin.organizations', route('admin.organizations'), 'Bailleurs', 'buildings'],
+        ['admin.users', route('admin.users'), 'Comptes', 'person-lock'],
+        ['admin.audit', route('admin.audit'), 'Activité', 'journal-text'],
+        ['admin.settings', route('admin.settings'), 'Paramètres', 'gear'],
     ];
 @endphp
-<nav class="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card/95 backdrop-blur">
-    <div class="mx-auto flex max-w-3xl justify-around px-1 py-2">
-        @foreach ($links as [$url, $label, $active])
-            <a href="{{ $url }}" class="rounded-xl px-2 py-2 text-xs font-semibold {{ $active ? 'text-brand' : 'text-muted' }}">{{ $label }}</a>
-        @endforeach
-    </div>
+<nav class="app-nav" aria-label="Super Admin">
+    <p class="app-nav-label">Plateforme</p>
+    @foreach ($links as [$pattern, $url, $text, $icon])
+        <a class="app-nav-link {{ request()->routeIs($pattern) ? 'is-active' : '' }}" href="{{ $url }}">
+            <i class="bi bi-{{ $icon }}" aria-hidden="true"></i>
+            <span>{{ $text }}</span>
+        </a>
+    @endforeach
 </nav>

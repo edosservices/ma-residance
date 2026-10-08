@@ -3,39 +3,69 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#0e6b52">
+    <meta name="theme-color" content="#0f6b43">
     <title>{{ $title ?? 'Ma Résidence' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-paper font-sans text-ink antialiased">
-    <header class="sticky top-0 z-30 border-b border-line bg-paper/95 backdrop-blur">
-        <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
-            <div>
-                <a href="{{ $home ?? route('home') }}" class="text-base font-semibold tracking-tight">{{ $currentOrganization->name ?? 'Ma Résidence' }}</a>
-                <p class="text-xs text-muted">{{ $eyebrow ?? '' }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-                @if ($currentUser)
-                    <a href="{{ $alerts ?? route('office.notifications.index') }}" class="relative rounded-full border border-line bg-white px-3 py-2 text-sm font-semibold">
-                        Alertes
-                        @if ($unreadNotifications > 0)
-                            <span class="ml-1 rounded-full bg-brand px-1.5 text-xs text-white">{{ $unreadNotifications }}</span>
-                        @endif
-                    </a>
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button class="rounded-full px-2 py-2 text-sm text-muted">Sortir</button>
-                    </form>
-                @endif
-            </div>
+<body>
+    <div class="app-shell">
+        <aside class="app-sidebar d-none d-lg-flex flex-column">
+            <x-logo :href="$home ?? route('home')" class="mb-3" />
+            @isset($shellNav)
+                @include($shellNav)
+            @endisset
+        </aside>
+        <div class="app-main">
+            <header class="app-topbar">
+                <button class="icon-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#appNav" aria-controls="appNav" aria-label="Ouvrir le menu">
+                    <i class="bi bi-list" aria-hidden="true"></i>
+                </button>
+                <div class="d-lg-none brand-top">
+                    <x-logo :href="$home ?? route('home')" tagline="" />
+                </div>
+                <div class="topbar-copy d-none d-lg-block">
+                    <strong>{{ $currentOrganization->name ?? 'Ma Résidence' }}</strong>
+                    <span>{{ $eyebrow ?? '' }}</span>
+                </div>
+                <div class="ms-auto d-flex align-items-center gap-2">
+                    @if ($currentUser)
+                        <x-notifications />
+                        <div class="dropdown">
+                            <button class="icon-btn" type="button" data-bs-toggle="dropdown" aria-label="Compte de {{ $currentUser->name }}">
+                                <i class="bi bi-person" aria-hidden="true"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <div class="px-3 py-2">
+                                    <strong class="d-block">{{ $currentUser->name }}</strong>
+                                    <span class="small text-muted">{{ $eyebrow ?? $currentUser->phone }}</span>
+                                </div>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button class="dropdown-item"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Se déconnecter</button>
+                                </form>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </header>
+            <main class="app-content">
+                <x-flash />
+                @yield('content')
+            </main>
         </div>
-    </header>
-    <main class="mx-auto w-full max-w-3xl px-4 pb-28 pt-4">
-        <x-flash />
-        @yield('content')
-    </main>
-    @isset($shellNav)
-        @include($shellNav)
-    @endisset
+    </div>
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="appNav" aria-labelledby="appNavLabel">
+        <div class="offcanvas-header">
+            <h2 class="offcanvas-title h5 mb-0" id="appNavLabel">Ma Résidence</h2>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
+        </div>
+        <div class="offcanvas-body">
+            <p class="text-muted small mb-2">{{ $currentOrganization->name ?? 'Plateforme' }} · {{ $eyebrow ?? '' }}</p>
+            @isset($shellNav)
+                @include($shellNav)
+            @endisset
+        </div>
+    </div>
+    @include('partials.quickbar')
 </body>
 </html>

@@ -47,6 +47,7 @@ class EnsureTenant
             'home' => route('portal.dashboard'),
             'alerts' => route('portal.notifications.index'),
             'eyebrow' => 'Espace locataire',
+            'shellRole' => 'portal',
         ]);
 
         return $next($request);

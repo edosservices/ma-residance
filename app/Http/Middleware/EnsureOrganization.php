@@ -52,6 +52,7 @@ class EnsureOrganization
             'home' => route('office.dashboard'),
             'alerts' => route('office.notifications.index'),
             'eyebrow' => $member->role->label(),
+            'shellRole' => 'office',
         ]);
 
         return $next($request);
