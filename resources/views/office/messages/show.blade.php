@@ -7,7 +7,7 @@
                 <p class="text-xs text-muted">{{ $message->sender?->name }} · {{ $message->created_at->timezone(config('app.timezone'))->format('d/m H:i') }}</p>
                 <p class="mt-1 text-sm">{{ $message->body }}</p>
                 @if ($message->attachment_path)
-                    <a class="text-sm font-semibold text-brand" href="{{ asset('storage/'.$message->attachment_path) }}">Pièce jointe</a>
+                    <a class="text-sm font-semibold text-brand" href="{{ file_url($message->attachment_path) }}">Pièce jointe</a>
                 @endif
             </div>
         @endforeach

@@ -18,9 +18,20 @@
         <x-stat label="Revenus" :value="money($performance['collected'], $performance['currency'])" />
         <x-stat label="Dépenses" :value="money($performance['expenses'], $performance['currency'])" />
         <x-stat label="Net" :value="money($performance['net'], $performance['currency'])" />
-        <x-stat label="Maintenance" :value="$performance['maintenance']" hint="interventions" />
+        <x-stat label="Maintenance" :value="$performance['maintenance']" :hint="money($performance['maintenance_cost'], $performance['currency'])" />
     </div>
-    <p class="mt-2 text-sm text-muted">{{ $performance['months'] }} mois occupés sur l'historique des contrats.</p>
+    <p class="mt-2 text-sm text-muted">{{ $performance['months'] }} mois occupés · retard {{ money($performance['overdue'], $performance['currency']) }}</p>
+    <h2 class="mt-6 text-sm font-semibold uppercase tracking-wider text-muted">Paiements</h2>
+    <div class="mt-2 space-y-2">
+        @forelse ($performance['payments'] as $payment)
+            <a href="{{ route('office.payments.show', $payment) }}" class="card block">
+                <p class="text-sm text-muted">{{ $payment->reviewed_at?->timezone(config('app.timezone'))->format('d/m/Y H:i') }} · {{ $payment->reference }}</p>
+                <p class="font-semibold">{{ money($payment->amount_minor, $payment->currency) }} · {{ $payment->status->label() }}</p>
+            </a>
+        @empty
+            <p class="text-sm text-muted">Aucun paiement validé.</p>
+        @endforelse
+    </div>
     @if (allows('units.manage'))
         <details class="card mt-4">
             <summary class="cursor-pointer font-semibold">Modifier le prix</summary>

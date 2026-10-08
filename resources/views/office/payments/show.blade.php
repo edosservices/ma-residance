@@ -11,7 +11,7 @@
         <p class="card mt-3 text-sm">{{ $payment->note }}</p>
     @endif
     @if ($payment->proof_path)
-        <a class="mt-3 block text-sm font-semibold text-brand" href="{{ asset('storage/'.$payment->proof_path) }}" target="_blank">Voir la preuve</a>
+        <a class="mt-3 block text-sm font-semibold text-brand" href="{{ file_url($payment->proof_path) }}" target="_blank">Voir la preuve</a>
     @endif
     @if ($payment->status->value === 'pending' && allows('payments.validate'))
         <form method="POST" action="{{ route('office.payments.approve', $payment) }}" class="mt-4">

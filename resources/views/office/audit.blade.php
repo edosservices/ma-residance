@@ -6,6 +6,13 @@
             <article class="card">
                 <p class="text-xs text-muted">{{ $log->user?->name ?? 'Système' }} · {{ $log->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}</p>
                 <p class="mt-1 text-sm">{{ $log->description }}</p>
+                @if ($log->properties)
+                    <p class="mt-1 text-xs text-muted">
+                        @foreach ($log->properties as $key => $value)
+                            {{ $key }} : {{ is_scalar($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE) }}@if (! $loop->last) · @endif
+                        @endforeach
+                    </p>
+                @endif
             </article>
         @endforeach
     </div>

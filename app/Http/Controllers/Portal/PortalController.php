@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Portal;
 
+use App\Enums\InvoiceType;
 use App\Enums\MaintenanceUrgency;
 use App\Enums\PaymentMethod;
 use App\Enums\Permission;
@@ -39,13 +40,31 @@ class PortalController extends Controller
         $open = $invoices->filter(fn ($invoice) => ! in_array($invoice->status->value, ['paid', 'cancelled'], true));
         $primary = $contract?->currency ?? $context->organization()->preference('default_currency');
         $due = (int) $open->where('currency', $primary)->sum(fn ($invoice) => $invoice->balanceMinor());
+        $paid = (int) $invoices->where('currency', $primary)->sum(fn ($invoice) => $invoice->netPaidMinor());
         $next = $open->sortBy('due_on')->first();
+        $monthKey = $today->format('Y-m');
+        $charges = [];
+        foreach ([InvoiceType::Rent, InvoiceType::Water, InvoiceType::Electricity] as $type) {
+            $rows = $invoices->filter(fn ($invoice) => $invoice->type === $type && $invoice->period_key === $monthKey);
+            if ($rows->isEmpty() && $type !== InvoiceType::Rent) {
+                continue;
+            }
+            $charges[] = [
+                'label' => $type->label(),
+                'currency' => $rows->first()->currency ?? $primary,
+                'paid' => (int) $rows->sum(fn ($invoice) => $invoice->netPaidMinor()),
+                'due' => (int) $rows->sum(fn ($invoice) => $invoice->balanceMinor()),
+                'status' => $rows->first()?->status,
+            ];
+        }
 
         return view('portal.dashboard', [
             'tenant' => $tenant,
             'contract' => $contract,
             'invoices' => $invoices,
+            'charges' => $charges,
             'due' => $due,
+            'paid' => $paid,
             'next' => $next,
             'daysLate' => $next && $next->status->value === 'overdue'
                 ? $calendar->daysLate($today, CarbonImmutable::parse($next->due_on))

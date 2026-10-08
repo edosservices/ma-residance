@@ -10,10 +10,16 @@
             <select class="field" name="audience">
                 <option value="all">Tous les locataires</option>
                 <option value="one">Un locataire</option>
+                <option value="several">Plusieurs locataires</option>
                 <option value="property">Une propriété</option>
                 <option value="unit">Un logement</option>
             </select>
-            <select class="field" name="tenant_id"><option value="">Locataire</option>@foreach ($tenants as $tenant)<option value="{{ $tenant->id }}">{{ $tenant->name }}</option>@endforeach</select>
+            <select class="field" name="tenant_id"><option value="">Un locataire</option>@foreach ($tenants as $tenant)<option value="{{ $tenant->id }}">{{ $tenant->name }}</option>@endforeach</select>
+            <select class="field" name="tenant_ids[]" multiple size="4">
+                @foreach ($tenants as $tenant)
+                    <option value="{{ $tenant->id }}">{{ $tenant->name }}</option>
+                @endforeach
+            </select>
             <select class="field" name="property_id"><option value="">Propriété</option>@foreach ($properties as $property)<option value="{{ $property->id }}">{{ $property->name }}</option>@endforeach</select>
             <select class="field" name="unit_id"><option value="">Logement</option>@foreach ($units as $unit)<option value="{{ $unit->id }}">{{ $unit->name }}</option>@endforeach</select>
             <input class="field" name="title" placeholder="Titre" required>

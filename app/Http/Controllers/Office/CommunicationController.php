@@ -97,10 +97,12 @@ class CommunicationController extends Controller
     public function broadcast(Request $request, CurrentContext $context, NotificationDispatcher $notifications)
     {
         $data = $request->validate([
-            'audience' => ['required', 'in:one,all,property,unit'],
+            'audience' => ['required', 'in:one,several,all,property,unit'],
             'title' => ['required', 'string', 'max:120'],
             'body' => ['required', 'string', 'max:2000'],
             'tenant_id' => ['nullable', 'integer'],
+            'tenant_ids' => ['nullable', 'array'],
+            'tenant_ids.*' => ['integer'],
             'property_id' => ['nullable', 'integer'],
             'unit_id' => ['nullable', 'integer'],
         ]);
@@ -109,6 +111,7 @@ class CommunicationController extends Controller
 
         $query = match ($data['audience']) {
             'one' => $query->whereKey($data['tenant_id'] ?? 0),
+            'several' => $query->whereIn('id', $data['tenant_ids'] ?? []),
             'property' => $query->whereHas('contracts', fn ($contracts) => $contracts->where('property_id', $data['property_id'] ?? 0)->whereIn('status', ['active', 'move_out_requested'])),
             'unit' => $query->whereHas('contracts', fn ($contracts) => $contracts->where('unit_id', $data['unit_id'] ?? 0)->whereIn('status', ['active', 'move_out_requested'])),
             default => $query,

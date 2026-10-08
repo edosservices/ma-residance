@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Auth\SessionController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\FileController;
 use App\Http\Controllers\Office\CashController;
 use App\Http\Controllers\Office\CommunicationController;
 use App\Http\Controllers\Office\ContractController;
@@ -29,6 +30,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/deconnexion', [SessionController::class, 'destroy'])->middleware('auth')->name('logout');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/fichiers/{path}', [FileController::class, 'show'])->where('path', '.*')->name('files.show');
     Route::post('/logements/{unit}/demander', [CatalogController::class, 'request'])->name('catalog.request');
 
     Route::prefix('espace')->middleware('org')->name('office.')->group(function () {

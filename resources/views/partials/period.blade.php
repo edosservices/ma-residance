@@ -5,6 +5,6 @@
 @endphp
 <div class="mb-4 flex gap-2 overflow-x-auto pb-1">
     @foreach ($choices as $key => $label)
-        <a href="{{ $base }}?periode={{ $key }}" class="shrink-0 rounded-full px-3 py-2 text-xs font-semibold {{ $current === $key ? 'bg-ink text-white' : 'bg-white text-muted' }}">{{ $label }}</a>
+        <a href="{{ request()->fullUrlWithQuery(['periode' => $key]) }}" class="shrink-0 rounded-full px-3 py-2 text-xs font-semibold {{ $current === $key ? 'bg-ink text-white' : 'bg-white text-muted' }}">{{ $label }}</a>
     @endforeach
 </div>

@@ -78,6 +78,7 @@ class UtilityService
             }
 
             $shares = $this->shares($contracts->all(), $totalMinor, $method);
+            $recordedTotal = array_sum($shares);
             $due = $this->calendar->dueOn($month, (int) $organization->preference('due_day'));
 
             $charge = UtilityCharge::withoutGlobalScopes()->create([
@@ -87,7 +88,7 @@ class UtilityService
                 'period_key' => $periodKey,
                 'period_start' => $periodStart->toDateString(),
                 'period_end' => $periodEnd->toDateString(),
-                'total_minor' => $totalMinor,
+                'total_minor' => $recordedTotal,
                 'currency' => $currency,
                 'method' => $method,
                 'created_by' => $actor->id,
@@ -131,7 +132,7 @@ class UtilityService
                 $actor,
                 'utility.allocated',
                 $charge,
-                'A réparti '.money($totalMinor, $currency).' de '.$type->label().' pour '.$property->name.'.',
+                'A réparti '.money($recordedTotal, $currency).' de '.$type->label().' pour '.$property->name.'.',
             );
 
             $this->notifications->notifyMembers(
@@ -139,7 +140,7 @@ class UtilityService
                 Permission::InvoicesView,
                 'utility.allocated',
                 'Charge répartie',
-                $type->label().' de '.money($totalMinor, $currency).' répartie sur '.$property->name.'.',
+                $type->label().' de '.money($recordedTotal, $currency).' répartie sur '.$property->name.'.',
             );
 
             return $charge;
@@ -152,6 +153,10 @@ class UtilityService
      */
     private function shares(array $contracts, int $totalMinor, AllocationMethod $method): array
     {
+        if ($method === AllocationMethod::Fixed) {
+            return array_fill(0, count($contracts), $totalMinor);
+        }
+
         if ($method === AllocationMethod::PerUnit) {
             return $this->split($totalMinor, array_fill(0, count($contracts), 1));
         }

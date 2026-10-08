@@ -8,8 +8,23 @@
         <p class="text-3xl font-semibold">{{ money($contract->rent_minor, $contract->currency) }}</p>
     @endif
     <div class="mt-4 grid grid-cols-2 gap-3">
-        <x-stat label="À payer" :value="money($due, $currency)" />
+        <x-stat label="Payé" :value="money($paid, $currency)" />
+        <x-stat label="Reste" :value="money($due, $currency)" />
         <x-stat label="Retard" :value="$daysLate > 0 ? $daysLate.' j' : '0'" />
+    </div>
+    <div class="mt-4 space-y-2">
+        @foreach ($charges as $charge)
+            <article class="card">
+                <div class="flex items-center justify-between gap-2">
+                    <p class="font-semibold">{{ $charge['label'] }}</p>
+                    @if ($charge['status'])
+                        <x-badge :tone="$charge['status']->tone()">{{ $charge['status']->label() }}</x-badge>
+                    @endif
+                </div>
+                <p class="mt-1 text-sm">Payé {{ money($charge['paid'], $charge['currency']) }}</p>
+                <p class="text-sm">Reste {{ money($charge['due'], $charge['currency']) }}</p>
+            </article>
+        @endforeach
     </div>
     @if ($next)
         <p class="mt-3 text-sm text-muted">Prochaine échéance {{ $next->due_on->format('d/m/Y') }}</p>
@@ -27,7 +42,7 @@
                     <p class="font-semibold">{{ $invoice->type->label() }} · {{ $invoice->period_key }}</p>
                     <x-badge :tone="$invoice->status->tone()">{{ $invoice->status->label() }}</x-badge>
                 </div>
-                <p class="mt-1">{{ money($invoice->balanceMinor(), $invoice->currency) }}</p>
+                <p class="mt-1 text-sm">Payé {{ money($invoice->netPaidMinor(), $invoice->currency) }} · reste {{ money($invoice->balanceMinor(), $invoice->currency) }}</p>
             </a>
         @endforeach
     </div>

@@ -12,7 +12,16 @@ function money(int $minor, string $currency): string
 
 function store_upload(?UploadedFile $file, string $folder): ?string
 {
-    return $file?->store($folder, 'public');
+    return $file?->store($folder, 'local');
+}
+
+function file_url(?string $path): ?string
+{
+    if ($path === null || $path === '') {
+        return null;
+    }
+
+    return route('files.show', ['path' => $path]);
 }
 
 function allows(string $permission): bool

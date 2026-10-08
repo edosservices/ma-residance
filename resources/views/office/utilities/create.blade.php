@@ -14,7 +14,8 @@
             <option value="electricity">Électricité</option>
         </select>
         <input class="field" name="month" type="month" value="{{ now()->format('Y-m') }}" required>
-        <input class="field" name="total" placeholder="Montant global" required>
+        <input class="field" name="total" placeholder="Montant" required>
+        <p class="text-xs text-muted">Par personne ou par logement : montant global à répartir. Montant fixe : chaque logement occupé est facturé de ce montant.</p>
         <select class="field" name="currency">
             @foreach ($currencies as $currency)
                 <option>{{ $currency }}</option>
@@ -23,6 +24,7 @@
         <select class="field" name="method">
             <option value="per_person">Par personne</option>
             <option value="per_unit">Par logement</option>
+            <option value="fixed">Montant fixe par logement occupé</option>
         </select>
         <button class="btn btn-primary w-full">Répartir</button>
     </form>

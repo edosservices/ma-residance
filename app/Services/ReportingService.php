@@ -8,19 +8,26 @@ use App\Enums\ContractStatus;
 use App\Enums\ExpenseStatus;
 use App\Enums\UnitStatus;
 use App\Models\CashCollection;
+use App\Models\CashRemittance;
 use App\Models\Contract;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\MaintenanceRequest;
 use App\Models\Organization;
+use App\Models\Payment;
 use App\Models\Property;
 use App\Models\Unit;
+use App\Services\Billing\BillingCalendar;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ReportingService
 {
-    public function __construct(private BillingService $billing) {}
+    public function __construct(
+        private BillingService $billing,
+        private BillingCalendar $calendar,
+    ) {}
 
     /**
      * @return array{0: ?CarbonImmutable, 1: ?CarbonImmutable, 2: string}
@@ -43,6 +50,7 @@ class ReportingService
         $today = CarbonImmutable::now($organization->timezone)->startOfDay();
         $this->billing->refreshOpenInvoices($organization, $today);
         [$start, $end, $label] = $this->range($organization, $period);
+        $late = $this->lateSnapshot($organization, $today);
 
         return [
             'period' => $period,
@@ -50,7 +58,10 @@ class ReportingService
             'stock' => $this->stock($organization),
             'currencies' => $this->financials($organization, $start, $end),
             'held' => $this->held($organization),
-            'overdue' => $this->overdueList($organization),
+            'remitted' => $this->remitted($organization, $start, $end),
+            'overdue' => $late['invoices'],
+            'late_count' => $late['tenants'],
+            'late_totals' => $late['totals'],
             'maintenance' => MaintenanceRequest::withoutGlobalScopes()
                 ->with('unit')
                 ->where('organization_id', $organization->id)
@@ -71,6 +82,7 @@ class ReportingService
         $unavailable = (clone $units)->where('status', UnitStatus::Unavailable)->count();
         $occupied = (clone $units)->whereIn('status', [UnitStatus::Occupied, UnitStatus::DepartureScheduled])->count();
         $free = (clone $units)->where('status', UnitStatus::Available)->count();
+        $maintenance = (clone $units)->where('status', UnitStatus::Maintenance)->count();
         $rentable = max(1, $total - $unavailable);
 
         return [
@@ -78,6 +90,7 @@ class ReportingService
             'units' => $total,
             'occupied' => $occupied,
             'free' => $free,
+            'maintenance' => $maintenance,
             'tenants' => Contract::withoutGlobalScopes()
                 ->where('organization_id', $organization->id)
                 ->whereIn('status', [ContractStatus::Active->value, ContractStatus::MoveOutRequested->value])
@@ -89,43 +102,80 @@ class ReportingService
     }
 
     /**
-     * @return array<string, array<string, int>>
+     * Attendu = factures dues sur la période.
+     * Encaissé = paiements validés dont la date de validation tombe dans la période.
+     * Le net ne reprend jamais le montant d'une facture non encaissée.
+     *
+     * @return array<string, array<string, int|float>>
      */
-    public function financials(Organization $organization, ?CarbonImmutable $start, ?CarbonImmutable $end): array
+    public function financials(Organization $organization, ?CarbonImmutable $start, ?CarbonImmutable $end, ?int $propertyId = null, ?int $unitId = null): array
     {
         $invoices = DB::table('invoices')
             ->where('organization_id', $organization->id)
-            ->where('status', '!=', 'cancelled');
+            ->where('status', '!=', 'cancelled')
+            ->when($propertyId, fn ($query) => $query->where('property_id', $propertyId))
+            ->when($unitId, fn ($query) => $query->where('unit_id', $unitId))
+            ->when($start && $end, function ($query) use ($start, $end) {
+                $query->whereDate('due_on', '>=', $start->toDateString())
+                    ->whereDate('due_on', '<=', $end->toDateString());
+            })
+            ->get(['id', 'type', 'currency', 'amount_minor', 'status']);
 
-        if ($start && $end) {
-            $invoices->whereBetween('period_start', [$start->toDateString(), $end->toDateString()]);
-        }
-
-        $rows = $invoices->get(['id', 'type', 'currency', 'amount_minor', 'status']);
+        $paid = $this->netPaidMap($invoices->pluck('id')->all());
         $result = [];
 
-        foreach ($rows as $row) {
+        foreach ($invoices as $row) {
             $currency = $row->currency;
             $result[$currency] ??= $this->emptyMoney();
-            $paid = $this->billing->netPaid((int) $row->id);
-            $balance = max(0, (int) $row->amount_minor - $paid);
+            $net = $paid[(int) $row->id] ?? 0;
+            $balance = max(0, (int) $row->amount_minor - $net);
+            $settled = min((int) $row->amount_minor, max(0, $net));
             $result[$currency]['expected'] += (int) $row->amount_minor;
-            $result[$currency]['collected'] += min((int) $row->amount_minor, $paid);
             $result[$currency]['outstanding'] += $balance;
+            $result[$currency]['settled'] += $settled;
             $result[$currency][$row->type.'_expected'] = ($result[$currency][$row->type.'_expected'] ?? 0) + (int) $row->amount_minor;
-            $result[$currency][$row->type.'_collected'] = ($result[$currency][$row->type.'_collected'] ?? 0) + min((int) $row->amount_minor, $paid);
 
             if ($row->status === 'overdue') {
                 $result[$currency]['overdue'] += $balance;
             }
         }
 
+        $collected = DB::table('payment_allocations as allocations')
+            ->join('payments', 'payments.id', '=', 'allocations.payment_id')
+            ->join('invoices', 'invoices.id', '=', 'allocations.invoice_id')
+            ->where('payments.organization_id', $organization->id)
+            ->where('payments.status', 'approved')
+            ->when($propertyId, fn ($query) => $query->where('invoices.property_id', $propertyId))
+            ->when($unitId, fn ($query) => $query->where('invoices.unit_id', $unitId))
+            ->when($start && $end, function ($query) use ($start, $end) {
+                $query->whereDate('payments.reviewed_at', '>=', $start->toDateString())
+                    ->whereDate('payments.reviewed_at', '<=', $end->toDateString());
+            })
+            ->groupBy('invoices.type', 'invoices.currency', 'payments.kind')
+            ->get([
+                'invoices.type',
+                'invoices.currency',
+                'payments.kind',
+                DB::raw('SUM(allocations.amount_minor) as total'),
+            ]);
+
+        foreach ($collected as $row) {
+            $result[$row->currency] ??= $this->emptyMoney();
+            $signed = ($row->kind === 'reversal' ? -1 : 1) * (int) $row->total;
+            $result[$row->currency]['collected'] += $signed;
+            $key = $row->type.'_collected';
+            $result[$row->currency][$key] = ($result[$row->currency][$key] ?? 0) + $signed;
+        }
+
         $expenses = Expense::withoutGlobalScopes()
             ->where('organization_id', $organization->id)
-            ->where('status', ExpenseStatus::Recorded);
+            ->where('status', ExpenseStatus::Recorded)
+            ->when($propertyId, fn ($query) => $query->where('property_id', $propertyId))
+            ->when($unitId, fn ($query) => $query->where('unit_id', $unitId));
 
         if ($start && $end) {
-            $expenses->whereBetween('spent_on', [$start->toDateString(), $end->toDateString()]);
+            $expenses->whereDate('spent_on', '>=', $start->toDateString())
+                ->whereDate('spent_on', '<=', $end->toDateString());
         }
 
         foreach ($expenses->get(['currency', 'amount_minor']) as $expense) {
@@ -136,7 +186,7 @@ class ReportingService
         foreach ($result as $currency => $bucket) {
             $result[$currency]['net'] = $bucket['collected'] - $bucket['expenses'];
             $result[$currency]['collection_rate'] = $bucket['expected'] > 0
-                ? round($bucket['collected'] / $bucket['expected'] * 100, 1)
+                ? round($bucket['settled'] / $bucket['expected'] * 100, 1)
                 : 0;
         }
 
@@ -146,7 +196,7 @@ class ReportingService
     }
 
     /**
-     * @return list<array{agent: string, currency: string, amount: int}>
+     * @return list<array{agent: string, agent_id: int, currency: string, amount: int}>
      */
     public function held(Organization $organization): array
     {
@@ -170,36 +220,37 @@ class ReportingService
             ->all();
     }
 
+    /**
+     * @return list<array{currency: string, amount: int}>
+     */
+    public function remitted(Organization $organization, ?CarbonImmutable $start, ?CarbonImmutable $end): array
+    {
+        $query = CashRemittance::withoutGlobalScopes()
+            ->where('organization_id', $organization->id)
+            ->where('status', 'confirmed');
+
+        if ($start && $end) {
+            $query->whereDate('confirmed_at', '>=', $start->toDateString())
+                ->whereDate('confirmed_at', '<=', $end->toDateString());
+        }
+
+        return $query->get(['currency', 'amount_minor'])
+            ->groupBy('currency')
+            ->map(fn ($rows, $currency) => [
+                'currency' => $currency,
+                'amount' => (int) $rows->sum('amount_minor'),
+            ])
+            ->values()
+            ->all();
+    }
+
     public function unitPerformance(Unit $unit, string $period = 'all'): array
     {
         $organization = Organization::query()->findOrFail($unit->organization_id);
         [$start, $end, $label] = $this->range($organization, $period);
+        $money = $this->financials($organization, $start, $end, null, $unit->id);
+        $bucket = $money[$unit->currency] ?? $this->emptyMoney();
 
-        $invoices = Invoice::withoutGlobalScopes()
-            ->where('unit_id', $unit->id)
-            ->where('status', '!=', 'cancelled');
-
-        if ($start && $end) {
-            $invoices->whereBetween('period_start', [$start->toDateString(), $end->toDateString()]);
-        }
-
-        $collected = 0;
-        $expected = 0;
-
-        foreach ($invoices->get() as $invoice) {
-            $expected += (int) $invoice->amount_minor;
-            $collected += min((int) $invoice->amount_minor, $this->billing->netPaid($invoice->id));
-        }
-
-        $expenses = Expense::withoutGlobalScopes()
-            ->where('unit_id', $unit->id)
-            ->where('status', ExpenseStatus::Recorded);
-
-        if ($start && $end) {
-            $expenses->whereBetween('spent_on', [$start->toDateString(), $end->toDateString()]);
-        }
-
-        $expenseTotal = (int) $expenses->sum('amount_minor');
         $months = Contract::withoutGlobalScopes()
             ->where('unit_id', $unit->id)
             ->whereNotIn('status', [ContractStatus::Cancelled->value, ContractStatus::Draft->value])
@@ -211,35 +262,60 @@ class ReportingService
                 return max(1, (int) $from->diffInMonths($to, true) + 1);
             });
 
+        $maintenanceCost = (int) Expense::withoutGlobalScopes()
+            ->where('unit_id', $unit->id)
+            ->where('status', ExpenseStatus::Recorded)
+            ->where(function ($query) {
+                $query->whereNotNull('maintenance_request_id')
+                    ->orWhereHas('category', fn ($category) => $category->where('slug', 'maintenance'));
+            })
+            ->when($start && $end, function ($query) use ($start, $end) {
+                $query->whereDate('spent_on', '>=', $start->toDateString())
+                    ->whereDate('spent_on', '<=', $end->toDateString());
+            })
+            ->sum('amount_minor');
+
+        $payments = Payment::withoutGlobalScopes()
+            ->with('invoice')
+            ->where('status', 'approved')
+            ->whereHas('invoice', fn ($query) => $query->where('unit_id', $unit->id))
+            ->latest('reviewed_at')
+            ->limit(8)
+            ->get();
+
         return [
             'label' => $label,
-            'expected' => $expected,
-            'collected' => $collected,
-            'expenses' => $expenseTotal,
-            'net' => $collected - $expenseTotal,
+            'expected' => $bucket['expected'],
+            'collected' => $bucket['collected'],
+            'expenses' => $bucket['expenses'],
+            'net' => $bucket['net'],
+            'outstanding' => $bucket['outstanding'],
+            'overdue' => $bucket['overdue'],
             'months' => $months,
             'maintenance' => MaintenanceRequest::withoutGlobalScopes()->where('unit_id', $unit->id)->count(),
+            'maintenance_cost' => $maintenanceCost,
             'currency' => $unit->currency,
+            'payments' => $payments,
         ];
     }
 
     /**
      * @return list<array{label: string, collected: int, expenses: int, net: int}>
      */
-    public function monthlySeries(Organization $organization, string $currency): array
+    public function monthlySeries(Organization $organization, string $currency, ?int $propertyId = null): array
     {
         $now = CarbonImmutable::now($organization->timezone)->startOfMonth();
         $series = [];
 
         for ($i = 11; $i >= 0; $i--) {
-            $month = $now->subMonths($i);
-            $bucket = $this->financials($organization, $month->startOfMonth(), $month->endOfMonth());
+            $month = $now->subMonthsNoOverflow($i);
+            $bucket = $this->financials($organization, $month->startOfMonth(), $month->endOfMonth(), $propertyId);
             $data = $bucket[$currency] ?? $this->emptyMoney();
             $series[] = [
                 'label' => $month->translatedFormat('M'),
                 'collected' => $data['collected'],
                 'expenses' => $data['expenses'],
-                'net' => $data['collected'] - $data['expenses'],
+                'net' => $data['net'],
             ];
         }
 
@@ -248,68 +324,85 @@ class ReportingService
 
     public function propertyBreakdown(Organization $organization, ?CarbonImmutable $start, ?CarbonImmutable $end): array
     {
-        $properties = Property::withoutGlobalScopes()->where('organization_id', $organization->id)->get();
         $rows = [];
 
-        foreach ($properties as $property) {
-            $invoices = Invoice::withoutGlobalScopes()
-                ->where('property_id', $property->id)
-                ->where('status', '!=', 'cancelled');
-
-            if ($start && $end) {
-                $invoices->whereBetween('period_start', [$start->toDateString(), $end->toDateString()]);
-            }
-
-            $collected = 0;
-            foreach ($invoices->get() as $invoice) {
-                $collected += min((int) $invoice->amount_minor, $this->billing->netPaid($invoice->id));
-            }
-
-            $expenses = Expense::withoutGlobalScopes()
-                ->where('property_id', $property->id)
-                ->where('status', ExpenseStatus::Recorded);
-
-            if ($start && $end) {
-                $expenses->whereBetween('spent_on', [$start->toDateString(), $end->toDateString()]);
-            }
-
-            $expenseTotal = (int) $expenses->sum('amount_minor');
+        foreach (Property::withoutGlobalScopes()->where('organization_id', $organization->id)->orderBy('name')->get() as $property) {
             $rows[] = [
+                'id' => $property->id,
                 'name' => $property->name,
-                'collected' => $collected,
-                'expenses' => $expenseTotal,
-                'net' => $collected - $expenseTotal,
+                'currencies' => $this->financials($organization, $start, $end, $property->id),
             ];
         }
 
         return $rows;
     }
 
-    public function expensesByCategory(Organization $organization, ?CarbonImmutable $start, ?CarbonImmutable $end)
+    public function expensesByCategory(Organization $organization, ?CarbonImmutable $start, ?CarbonImmutable $end, ?int $propertyId = null)
     {
         $query = Expense::withoutGlobalScopes()
             ->selectRaw('expense_category_id, currency, SUM(amount_minor) as total')
             ->where('organization_id', $organization->id)
             ->where('status', ExpenseStatus::Recorded)
+            ->when($propertyId, fn ($inner) => $inner->where('property_id', $propertyId))
             ->groupBy('expense_category_id', 'currency');
 
         if ($start && $end) {
-            $query->whereBetween('spent_on', [$start->toDateString(), $end->toDateString()]);
+            $query->whereDate('spent_on', '>=', $start->toDateString())
+                ->whereDate('spent_on', '<=', $end->toDateString());
         }
 
         return $query->with('category')->get();
     }
 
-    private function overdueList(Organization $organization)
+    /**
+     * @param  list<int>  $invoiceIds
+     * @return array<int, int>
+     */
+    private function netPaidMap(array $invoiceIds): array
     {
-        return Invoice::withoutGlobalScopes()
-            ->with('tenant', 'unit')
+        if ($invoiceIds === []) {
+            return [];
+        }
+
+        return DB::table('payment_allocations')
+            ->join('payments', 'payments.id', '=', 'payment_allocations.payment_id')
+            ->whereIn('payment_allocations.invoice_id', $invoiceIds)
+            ->where('payments.status', 'approved')
+            ->groupBy('payment_allocations.invoice_id')
+            ->selectRaw("payment_allocations.invoice_id as invoice_id, SUM(CASE WHEN payments.kind = 'payment' THEN payment_allocations.amount_minor WHEN payments.kind = 'reversal' THEN -payment_allocations.amount_minor ELSE 0 END) as net_paid")
+            ->pluck('net_paid', 'invoice_id')
+            ->map(fn ($amount) => (int) $amount)
+            ->all();
+    }
+
+    /**
+     * @return array{invoices: Collection, tenants: int, totals: array<string, int>}
+     */
+    private function lateSnapshot(Organization $organization, CarbonImmutable $today): array
+    {
+        $rows = Invoice::withoutGlobalScopes()
+            ->with('tenant', 'unit', 'contract')
             ->withBalance()
             ->where('organization_id', $organization->id)
             ->where('status', 'overdue')
             ->orderBy('due_on')
-            ->limit(8)
             ->get();
+
+        $totals = [];
+
+        foreach ($rows as $invoice) {
+            $grace = (int) ($invoice->contract?->grace_until_day ?? $organization->preference('grace_until_day'));
+            $due = CarbonImmutable::parse($invoice->due_on)->startOfDay();
+            $invoice->setAttribute('days_late', $this->calendar->daysLate($today, $due));
+            $invoice->setAttribute('grace_label', $this->calendar->graceEndsOn($due, $grace)->format('d/m'));
+            $totals[$invoice->currency] = ($totals[$invoice->currency] ?? 0) + $invoice->balanceMinor();
+        }
+
+        return [
+            'invoices' => $rows->take(8),
+            'tenants' => $rows->pluck('tenant_id')->unique()->count(),
+            'totals' => $totals,
+        ];
     }
 
     /**
@@ -320,6 +413,7 @@ class ReportingService
         return [
             'expected' => 0,
             'collected' => 0,
+            'settled' => 0,
             'outstanding' => 0,
             'overdue' => 0,
             'expenses' => 0,

@@ -7,9 +7,11 @@ namespace App\Http\Controllers\Office;
 use App\Enums\MemberRole;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
+use App\Models\Property;
 use App\Services\Billing\ProrataManager;
 use App\Services\ReportingService;
 use App\Support\CurrentContext;
+use Carbon\CarbonImmutable;
 
 class DashboardController extends Controller
 {
@@ -39,15 +41,25 @@ class DashboardController extends Controller
         $period = in_array(request('periode'), ['month', 'prev_month', 'year', 'prev_year', 'all'], true)
             ? request('periode')
             : 'month';
+        $propertyId = request()->integer('propriete') ?: null;
+        $properties = Property::query()->orderBy('name')->get();
+        if ($propertyId && ! $properties->contains('id', $propertyId)) {
+            $propertyId = null;
+        }
         [$start, $end, $label] = $reporting->range($context->organization(), $period);
-        $financials = $reporting->financials($context->organization(), $start, $end);
-        $currency = array_key_first($financials) ?: $context->organization()->preference('default_currency');
-        $series = $reporting->monthlySeries($context->organization(), $currency);
-        $properties = $reporting->propertyBreakdown($context->organization(), $start, $end);
-        $categories = $reporting->expensesByCategory($context->organization(), $start, $end);
+        $financials = $reporting->financials($context->organization(), $start, $end, $propertyId);
+        $currency = request('devise') ?: (array_key_first($financials) ?: $context->organization()->preference('default_currency'));
+        $series = $reporting->monthlySeries($context->organization(), $currency, $propertyId);
+        $breakdown = $reporting->propertyBreakdown($context->organization(), $start, $end);
+        $categories = $reporting->expensesByCategory($context->organization(), $start, $end, $propertyId);
         $stock = $reporting->stock($context->organization());
+        $now = CarbonImmutable::now($context->organization()->timezone);
+        $year = $reporting->financials($context->organization(), $now->startOfYear(), $now->endOfYear(), $propertyId);
+        $lifetime = $reporting->financials($context->organization(), null, null, $propertyId);
 
-        return view('office.reports', compact('period', 'label', 'financials', 'series', 'properties', 'categories', 'stock', 'currency'));
+        return view('office.reports', compact(
+            'period', 'label', 'financials', 'series', 'breakdown', 'categories', 'stock', 'currency', 'properties', 'propertyId', 'year', 'lifetime',
+        ));
     }
 
     public function audit(CurrentContext $context)
