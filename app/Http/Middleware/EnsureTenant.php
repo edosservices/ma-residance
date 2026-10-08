@@ -1,0 +1,54 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Middleware;
+
+use App\Enums\OrganizationStatus;
+use App\Models\Organization;
+use App\Models\Tenant;
+use App\Support\CurrentContext;
+use Closure;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+class EnsureTenant
+{
+    public function __construct(private CurrentContext $context) {}
+
+    public function handle(Request $request, Closure $next): Response
+    {
+        $user = $request->user();
+
+        if ($user === null || ! $user->isActive()) {
+            abort(403);
+        }
+
+        $preferred = $request->session()->get('current_tenant_id');
+        $query = Tenant::withoutGlobalScopes()->where('user_id', $user->id)->where('status', 'active');
+        $tenant = $preferred ? (clone $query)->whereKey($preferred)->first() : null;
+        $tenant ??= $query->first();
+
+        if ($tenant === null) {
+            return redirect()->route('catalog.index')->with('error', 'Vous n\'avez pas encore de logement.');
+        }
+
+        $organization = Organization::query()->find($tenant->organization_id);
+
+        if ($organization === null || $organization->status !== OrganizationStatus::Active) {
+            abort(403, 'Cette organisation est suspendue.');
+        }
+
+        $request->session()->put('current_tenant_id', $tenant->id);
+        $this->context->setOrganization($organization);
+        $this->context->setTenant($tenant);
+        view()->share([
+            'shellNav' => 'partials.nav-portal',
+            'home' => route('portal.dashboard'),
+            'alerts' => route('portal.notifications.index'),
+            'eyebrow' => 'Espace locataire',
+        ]);
+
+        return $next($request);
+    }
+}
