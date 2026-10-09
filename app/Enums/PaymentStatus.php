@@ -13,8 +13,8 @@ enum PaymentStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::Pending => 'En attente',
-            self::Approved => 'Validé',
+            self::Pending => 'À confirmer',
+            self::Approved => 'Approuvé',
             self::Rejected => 'Rejeté',
         };
     }

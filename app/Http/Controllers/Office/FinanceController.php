@@ -94,9 +94,14 @@ class FinanceController extends Controller
         return redirect()->route('office.invoices.index')->with('status', 'Charge répartie et factures créées.');
     }
 
-    public function payments()
+    public function payments(Request $request)
     {
-        $payments = Payment::query()->with('tenant', 'invoice')->latest()->paginate(20);
+        $payments = Payment::query()
+            ->with('tenant', 'invoice', 'declarer')
+            ->when($request->query('statut') === 'pending', fn ($query) => $query->where('status', 'pending')->where('kind', 'payment'))
+            ->latest()
+            ->paginate(20)
+            ->withQueryString();
 
         return view('office.payments.index', compact('payments'));
     }
@@ -138,7 +143,7 @@ class FinanceController extends Controller
     public function showPayment(Payment $payment)
     {
         $this->authorize('view', $payment);
-        $payment->load('tenant', 'invoice', 'declarer', 'reversal');
+        $payment->load('tenant', 'invoice', 'declarer', 'reviewer', 'reversal');
 
         return view('office.payments.show', compact('payment'));
     }
@@ -148,7 +153,7 @@ class FinanceController extends Controller
         $this->authorize('manage', $payment);
         $payments->approve($payment, $request->user());
 
-        return back()->with('status', 'Paiement validé.');
+        return back()->with('status', 'Paiement approuvé. Il est compté dans les encaissements à la date de validation.');
     }
 
     public function rejectPayment(Request $request, Payment $payment, PaymentService $payments)

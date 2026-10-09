@@ -22,7 +22,9 @@ use App\Services\CashCollectionService;
 use App\Services\MaintenanceService;
 use App\Services\MessageService;
 use App\Services\MoveOutService;
+use App\Models\Payment;
 use App\Services\PaymentService;
+use App\Services\ReportingService;
 use App\Support\CurrentContext;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
@@ -31,7 +33,7 @@ use Illuminate\Validation\Rule;
 
 class PortalController extends Controller
 {
-    public function dashboard(CurrentContext $context, BillingService $billing, BillingCalendar $calendar)
+    public function dashboard(CurrentContext $context, BillingService $billing, BillingCalendar $calendar, ReportingService $reporting)
     {
         $tenant = $context->tenant();
         $contract = Contract::query()->with('unit.property')->where('tenant_id', $tenant->id)->whereIn('status', ['active', 'move_out_requested', 'pending'])->latest('start_date')->first();
@@ -63,6 +65,8 @@ class PortalController extends Controller
             ->where('organization_id', $context->organization()->id)
             ->where('role', 'owner')
             ->first();
+        $snapshot = $reporting->tenantSnapshot($context->organization(), $tenant->id, $primary);
+        $payments = Payment::query()->with('invoice')->where('tenant_id', $tenant->id)->latest('id')->limit(8)->get();
 
         return view('portal.dashboard', [
             'tenant' => $tenant,
@@ -77,6 +81,8 @@ class PortalController extends Controller
                 ? $calendar->daysLate($today, CarbonImmutable::parse($next->due_on))
                 : 0,
             'currency' => $primary,
+            'snapshot' => $snapshot,
+            'payments' => $payments,
         ]);
     }
 
@@ -99,6 +105,7 @@ class PortalController extends Controller
         $this->authorize('view', $invoice);
         $billing->applyStatus($invoice, CarbonImmutable::now($context->organization()->timezone));
         $invoice->load('items', 'unit');
+        $payments = Payment::query()->with('declarer', 'reviewer')->where('invoice_id', $invoice->id)->latest('id')->get();
         $agents = OrganizationMember::withoutGlobalScopes()
             ->with('user')
             ->where('organization_id', $context->organization()->id)
@@ -110,6 +117,7 @@ class PortalController extends Controller
             'invoice' => $invoice,
             'balance' => $billing->balanceOf($invoice),
             'agents' => $agents,
+            'payments' => $payments,
         ]);
     }
 
@@ -120,7 +128,9 @@ class PortalController extends Controller
             'amount' => ['required', 'string', 'max:20'],
             'method' => ['required', Rule::in(['transfer', 'other'])],
             'note' => ['nullable', 'string', 'max:500'],
-            'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:4096'],
+            'proof' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:4096'],
+        ], [
+            'proof.required' => 'Joignez la preuve du paiement pour qu’elle puisse être confirmée.',
         ]);
         $payments->declare(
             $context->organization(),
@@ -132,7 +142,7 @@ class PortalController extends Controller
             store_upload($request->file('proof'), 'proofs'),
         );
 
-        return back()->with('status', 'Paiement déclaré. Il sera validé par le bailleur.');
+        return back()->with('status', 'Preuve envoyée. Le paiement est à confirmer : il n’entre dans les encaissements qu’une fois approuvé.');
     }
 
     public function cashPayment(Request $request, Invoice $invoice, CurrentContext $context, CashCollectionService $cash)

@@ -664,6 +664,35 @@ select.field {
 }
 
 .bar-in { background: var(--mr-green); }
+.bar-due { background: #69468f; }
+
+.payment-trace {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.payment-trace li {
+    padding-left: 0.85rem;
+    border-left: 3px solid var(--mr-line);
+}
+
+.payment-trace strong,
+.payment-trace span {
+    display: block;
+}
+
+.payment-trace span {
+    color: var(--mr-muted);
+    font-size: 0.84rem;
+}
+
+.access-slip {
+    border-color: #b7e0c8;
+    background: #e5f6ec;
+}
 .bar-out { background: #c9b3df; }
 .bar-net { background: var(--mr-mauve); }
 .bar-net.negative { background: #e3b4b0; }

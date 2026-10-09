@@ -307,6 +307,145 @@ class ReportingService
     /**
      * @return list<array{label: string, collected: int, expenses: int, net: int}>
      */
+    /**
+     * Suivi locataire. Attendu = factures dues dans le mois.
+     * Approuvé = paiements validés dont la date de validation tombe dans le mois.
+     * Un paiement encore à confirmer n'entre pas dans Approuvé.
+     *
+     * @return array{approved: int, awaiting: int, settled: int, series: list<array{label: string, collected: int, expenses: int, net: int}>}
+     */
+    public function tenantSnapshot(Organization $organization, int $tenantId, string $currency): array
+    {
+        $approvedRow = DB::table('payment_allocations as allocations')
+            ->join('payments', 'payments.id', '=', 'allocations.payment_id')
+            ->where('payments.organization_id', $organization->id)
+            ->where('payments.tenant_id', $tenantId)
+            ->where('payments.currency', $currency)
+            ->where('payments.status', 'approved')
+            ->selectRaw("COALESCE(SUM(CASE WHEN payments.kind = 'reversal' THEN -allocations.amount_minor ELSE allocations.amount_minor END), 0) as total")
+            ->first();
+
+        $awaiting = (int) Payment::withoutGlobalScopes()
+            ->where('organization_id', $organization->id)
+            ->where('tenant_id', $tenantId)
+            ->where('currency', $currency)
+            ->where('status', 'pending')
+            ->where('kind', 'payment')
+            ->sum('amount_minor');
+
+        $settled = (int) Invoice::withoutGlobalScopes()
+            ->where('organization_id', $organization->id)
+            ->where('tenant_id', $tenantId)
+            ->where('currency', $currency)
+            ->where('status', 'paid')
+            ->sum('amount_minor');
+
+        return [
+            'approved' => (int) ($approvedRow->total ?? 0),
+            'awaiting' => $awaiting,
+            'settled' => $settled,
+            'series' => $this->tenantMonthlySeries($organization, $tenantId, $currency),
+        ];
+    }
+
+    /**
+     * @return list<array{label: string, collected: int, expenses: int, net: int}>
+     */
+    public function tenantMonthlySeries(Organization $organization, int $tenantId, string $currency): array
+    {
+        $now = CarbonImmutable::now($organization->timezone)->startOfMonth();
+        $series = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $month = $now->subMonthsNoOverflow($i);
+            $start = $month->startOfMonth()->toDateString();
+            $end = $month->endOfMonth()->toDateString();
+            $expected = (int) DB::table('invoices')
+                ->where('organization_id', $organization->id)
+                ->where('tenant_id', $tenantId)
+                ->where('currency', $currency)
+                ->where('status', '!=', 'cancelled')
+                ->whereDate('due_on', '>=', $start)
+                ->whereDate('due_on', '<=', $end)
+                ->sum('amount_minor');
+            $approved = DB::table('payment_allocations as allocations')
+                ->join('payments', 'payments.id', '=', 'allocations.payment_id')
+                ->where('payments.organization_id', $organization->id)
+                ->where('payments.tenant_id', $tenantId)
+                ->where('payments.currency', $currency)
+                ->where('payments.status', 'approved')
+                ->whereDate('payments.reviewed_at', '>=', $start)
+                ->whereDate('payments.reviewed_at', '<=', $end)
+                ->selectRaw("COALESCE(SUM(CASE WHEN payments.kind = 'reversal' THEN -allocations.amount_minor ELSE allocations.amount_minor END), 0) as total")
+                ->first();
+            $approvedMinor = (int) ($approved->total ?? 0);
+            $series[] = [
+                'label' => $month->locale('fr')->translatedFormat('M'),
+                'collected' => $approvedMinor,
+                'expenses' => $expected,
+                'net' => $approvedMinor,
+            ];
+        }
+
+        return $series;
+    }
+
+    /**
+     * Espèces confirmées par un collaborateur. Ce n'est pas le total encaissé de l'organisation.
+     *
+     * @return list<array{label: string, collected: int, expenses: int, net: int}>
+     */
+    public function agentCollectionSeries(Organization $organization, int $agentId, string $currency): array
+    {
+        $now = CarbonImmutable::now($organization->timezone)->startOfMonth();
+        $series = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $month = $now->subMonthsNoOverflow($i);
+            $amount = (int) CashCollection::withoutGlobalScopes()
+                ->where('organization_id', $organization->id)
+                ->where('agent_id', $agentId)
+                ->where('currency', $currency)
+                ->whereIn('status', ['confirmed', 'remittance_pending', 'remitted'])
+                ->whereDate('agent_confirmed_at', '>=', $month->startOfMonth()->toDateString())
+                ->whereDate('agent_confirmed_at', '<=', $month->endOfMonth()->toDateString())
+                ->sum('amount_minor');
+            $series[] = [
+                'label' => $month->locale('fr')->translatedFormat('M'),
+                'collected' => $amount,
+                'expenses' => 0,
+                'net' => $amount,
+            ];
+        }
+
+        return $series;
+    }
+
+    /**
+     * @return list<array{label: string, collected: int, expenses: int, net: int}>
+     */
+    public function maintenanceSeries(Organization $organization): array
+    {
+        $now = CarbonImmutable::now($organization->timezone)->startOfMonth();
+        $series = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $month = $now->subMonthsNoOverflow($i);
+            $count = MaintenanceRequest::withoutGlobalScopes()
+                ->where('organization_id', $organization->id)
+                ->whereBetween('created_at', [$month->startOfMonth(), $month->endOfMonth()])
+                ->count();
+            $series[] = [
+                'label' => $month->locale('fr')->translatedFormat('M'),
+                'collected' => $count,
+                'expenses' => 0,
+                'net' => $count,
+            ];
+        }
+
+        return $series;
+    }
+
     public function monthlySeries(Organization $organization, string $currency, ?int $propertyId = null): array
     {
         $now = CarbonImmutable::now($organization->timezone)->startOfMonth();

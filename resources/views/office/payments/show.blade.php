@@ -10,13 +10,11 @@
     @if ($payment->note)
         <p class="card mt-3 text-sm">{{ $payment->note }}</p>
     @endif
-    @if ($payment->proof_path)
-        <a class="mt-3 block text-sm font-semibold text-brand" href="{{ file_url($payment->proof_path) }}" target="_blank">Voir la preuve</a>
-    @endif
+    @include('partials.payment-trace', ['payment' => $payment])
     @if ($payment->status->value === 'pending' && allows('payments.validate'))
         <form method="POST" action="{{ route('office.payments.approve', $payment) }}" class="mt-4">
             @csrf
-            <button class="btn btn-primary w-full">Valider</button>
+            <button class="btn btn-primary w-full">Approuver</button>
         </form>
         <form method="POST" action="{{ route('office.payments.reject', $payment) }}" class="mt-2 space-y-2">
             @csrf

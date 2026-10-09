@@ -8,6 +8,7 @@ use App\Enums\MemberRole;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\MaintenanceRequest;
+use App\Models\Payment;
 use App\Models\Property;
 use App\Services\Billing\ProrataManager;
 use App\Services\ReportingService;
@@ -52,7 +53,22 @@ class DashboardController extends Controller
             ->whereNotIn('status', ['done', 'cancelled'])
             ->when($propertyId, fn ($query) => $query->whereHas('unit', fn ($unit) => $unit->where('property_id', $propertyId)))
             ->count();
+        $dashboard['pending_payments'] = Payment::withoutGlobalScopes()
+            ->with('tenant')
+            ->where('organization_id', $organization->id)
+            ->where('status', 'pending')
+            ->where('kind', 'payment')
+            ->latest('id')
+            ->limit(6)
+            ->get();
         $role = $context->member()->role;
+        $currency = (string) ($dashboard['chart_currency'] ?? $organization->preference('default_currency', 'USD'));
+        if ($role === MemberRole::Collector) {
+            $dashboard['work_series'] = $reporting->agentCollectionSeries($organization, (int) auth()->id(), $currency);
+        }
+        if ($role === MemberRole::Technician) {
+            $dashboard['work_series'] = $reporting->maintenanceSeries($organization);
+        }
         $view = match ($role) {
             MemberRole::Collector => 'office.dashboard-collector',
             MemberRole::Technician => 'office.dashboard-technician',

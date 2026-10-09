@@ -120,6 +120,26 @@
         </div>
     </div>
 
+    @if (allows('payments.view') || allows('payments.validate'))
+        <section class="mb-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                <h2 class="h6 text-uppercase text-muted mb-0">Paiements à confirmer</h2>
+                <a href="{{ route('office.payments.index', ['statut' => 'pending']) }}">Voir la liste</a>
+            </div>
+            @forelse ($pending_payments as $payment)
+                <a class="card d-block mb-2" href="{{ route('office.payments.show', $payment) }}">
+                    <div class="d-flex justify-content-between gap-2">
+                        <strong>{{ $payment->tenant?->name }} · {{ $payment->reference }}</strong>
+                        <x-badge :tone="$payment->status->tone()">{{ $payment->status->label() }}</x-badge>
+                    </div>
+                    <p class="mb-0 mt-1">{{ money($payment->amount_minor, $payment->currency) }}@if ($payment->proof_path) · preuve jointe @endif</p>
+                </a>
+            @empty
+                <p class="text-muted mb-0">Aucune preuve en attente. Un paiement approuvé est déjà compté dans les encaissements.</p>
+            @endforelse
+        </section>
+    @endif
+
     <div class="d-flex flex-wrap gap-2 mb-4">
         @if (allows('invoices.manage'))
             <a class="btn btn-ghost" href="{{ route('office.utilities.create') }}"><i class="bi bi-droplet" aria-hidden="true"></i> Créer une facture d'eau ou d'électricité</a>
