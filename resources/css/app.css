@@ -76,6 +76,7 @@ a {
 .app-shell {
     display: flex;
     min-height: 100vh;
+    max-width: 100%;
     background: var(--mr-paper);
 }
 
@@ -106,6 +107,8 @@ a {
     display: flex;
     align-items: center;
     gap: 0.7rem;
+    min-width: 0;
+    max-width: 100%;
     min-height: 68px;
     padding: 0.55rem 0.85rem;
     background: rgba(255, 255, 255, 0.94);
@@ -212,6 +215,22 @@ a {
 .brand-top .brand-name { font-size: 0.95rem; }
 
 .topbar-copy {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.topbar-tools {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    min-width: 0;
+    max-width: 100%;
+    margin-left: auto;
+    flex: 0 1 auto;
+}
+
+.topbar-tools > * {
     min-width: 0;
 }
 
@@ -454,13 +473,11 @@ a.stat-card:hover {
 
 .stat-card .value {
     margin-top: 0.35rem;
-    font-size: clamp(1.15rem, 2vw, 1.65rem);
+    font-size: clamp(1.05rem, 2vw, 1.65rem);
     font-weight: 750;
     letter-spacing: -0.03em;
     line-height: 1.2;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
 }
 
 .stat-card .hint {
@@ -1931,13 +1948,20 @@ body.theme-admin .app-sidebar .account-link:hover {
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
+    min-width: 0;
     min-height: 44px;
-    max-width: 16rem;
+    max-width: min(16rem, 100%);
     padding: 0.2rem 0.55rem 0.2rem 0.2rem;
     border: 1px solid var(--mr-line);
     border-radius: 8px;
     background: #fff;
     color: var(--mr-ink);
+    overflow: hidden;
+}
+
+.account-copy {
+    min-width: 0;
+    text-align: start;
 }
 
 .account-trigger strong,
@@ -2062,7 +2086,10 @@ body.theme-admin .app-sidebar .account-link:hover {
 .logout-inline {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.35rem;
+    min-width: 0;
+    max-width: 100%;
     min-height: 40px;
     padding: 0.35rem 0.75rem;
     border: 1px solid var(--mr-line);
@@ -2071,7 +2098,6 @@ body.theme-admin .app-sidebar .account-link:hover {
     color: var(--mr-ink);
     font-size: 0.82rem;
     font-weight: 650;
-    white-space: nowrap;
 }
 
 .logout-inline:hover {
@@ -2113,7 +2139,12 @@ body.theme-admin .app-sidebar .account-link:hover {
     min-height: 280px;
 }
 
-@media (min-width: 992px) {
+.portal-topnav {
+    min-width: 0;
+    max-width: 100%;
+}
+
+@media (min-width: 1200px) {
     body.theme-tenant .app-sidebar {
         display: none !important;
     }
@@ -2122,6 +2153,8 @@ body.theme-admin .app-sidebar .account-link:hover {
         display: flex;
         gap: 0.15rem;
         align-items: center;
+        min-width: 0;
+        max-width: 100%;
         overflow-x: auto;
         padding: 0.35rem 1rem 0.55rem;
     }
@@ -2211,5 +2244,138 @@ body.theme-admin .offcanvas .account-menu .btn-ghost {
 
     .account-trigger .bi-chevron-down {
         display: none;
+    }
+
+    .logout-inline-form .logout-inline {
+        width: 42px;
+        padding-inline: 0;
+        font-size: 0;
+    }
+
+    .logout-inline-form .logout-inline i {
+        font-size: 1.05rem;
+    }
+
+    .ring {
+        width: 84px;
+        height: 84px;
+    }
+
+    .ring strong {
+        width: 58px;
+        height: 58px;
+        font-size: 0.85rem;
+    }
+}
+
+.page-actions,
+.app-content .d-flex,
+.public-main .d-flex,
+.modal .d-flex {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.app-content .btn,
+.public-main .btn,
+.modal .btn,
+.offcanvas .btn {
+    max-width: 100%;
+    height: auto;
+    white-space: normal;
+    text-align: center;
+}
+
+.marketing-nav .container {
+    min-width: 0;
+}
+
+.public-nav {
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.quickbar a,
+.quickbar button {
+    min-width: 0;
+    padding-inline: 0.2rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.offcanvas {
+    max-width: min(20rem, 92vw);
+}
+
+.chart-col small {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.spotlight-value,
+.balance-value,
+.card,
+.page-header h1,
+.page-header p {
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 1399.98px) {
+    .app-sidebar {
+        width: 240px;
+        flex-basis: 240px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .app-content {
+        padding: 0.9rem 0.7rem 6.6rem;
+    }
+
+    .card,
+    .stat-card {
+        padding: 0.85rem;
+    }
+
+    .page-header h1,
+    .app-content h1 {
+        font-size: 1.35rem;
+    }
+}
+
+@media (max-width: 1199.98px) {
+    .app-content .row > .col-lg-5,
+    .app-content .row > .col-lg-6,
+    .app-content .row > .col-lg-7,
+    .app-content .row > .col-lg-8,
+    .app-content .row > .col-xl-6,
+    .app-content .row > .col-xl-8 {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .app-content .row > .col-md-3,
+    .app-content .row > .col-md-4,
+    .app-content .row > .col-lg-3,
+    .app-content .row > .col-lg-4,
+    .app-content .row > .col-xl,
+    .app-content .row > .col-xl-3,
+    .app-content .row > .col-xl-4 {
+        flex: 0 0 auto;
+        width: 50%;
+        max-width: 50%;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .app-content .row > [class*="col-"] {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 100%;
     }
 }

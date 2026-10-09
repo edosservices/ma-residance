@@ -15,15 +15,15 @@
         <div class="container py-2 d-flex align-items-center gap-2">
             <x-logo href="{{ route('home') }}" />
             @auth
-                <form method="POST" action="{{ route('logout') }}" class="logout-inline-form d-lg-none ms-auto">
+                <form method="POST" action="{{ route('logout') }}" class="logout-inline-form d-xl-none ms-auto">
                     @csrf
                     <button class="logout-inline" type="submit">Se déconnecter</button>
                 </form>
             @endauth
-            <button class="icon-btn d-lg-none {{ auth()->check() ? '' : 'ms-auto' }}" type="button" data-bs-toggle="offcanvas" data-bs-target="#publicNav" aria-label="Ouvrir le menu">
+            <button class="icon-btn d-xl-none {{ auth()->check() ? '' : 'ms-auto' }}" type="button" data-bs-toggle="offcanvas" data-bs-target="#publicNav" aria-label="Ouvrir le menu">
                 <i class="bi bi-list" aria-hidden="true"></i>
             </button>
-            <nav class="d-none d-lg-flex align-items-center gap-3 ms-auto" aria-label="Public">
+            <nav class="public-nav d-none d-xl-flex align-items-center gap-3 ms-auto" aria-label="Public">
                 <a class="fw-semibold text-decoration-none text-ink" href="{{ route('home') }}#plateforme">La plateforme</a>
                 <a class="fw-semibold text-decoration-none text-ink" href="{{ route('home') }}#fonctionnalites">Fonctionnalités</a>
                 <a class="fw-semibold text-decoration-none text-ink" href="{{ route('catalog.index') }}">Logements</a>
