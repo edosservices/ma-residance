@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\MessageThread;
 use App\Models\Organization;
 use App\Models\OrganizationMember;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Support\DomainException;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,10 @@ class MessageService
 
         if (trim($body) === '' && $attachment === null) {
             throw new DomainException('Le message est vide.');
+        }
+
+        if (! $this->belongsToOrganization($organization, $recipient)) {
+            throw new DomainException('Ce destinataire n\'appartient pas à votre organisation.');
         }
 
         return DB::transaction(function () use ($organization, $sender, $recipient, $body, $attachment) {
@@ -45,6 +50,7 @@ class MessageService
                 'body' => $body,
                 'attachment_path' => $attachment,
             ]);
+            $thread->touch();
 
             $isMember = OrganizationMember::withoutGlobalScopes()
                 ->where('organization_id', $organization->id)
@@ -67,5 +73,24 @@ class MessageService
     public function markRead(MessageThread $thread, User $user): void
     {
         $thread->participants()->updateExistingPivot($user->id, ['last_read_at' => now()]);
+    }
+
+    private function belongsToOrganization(Organization $organization, User $recipient): bool
+    {
+        $member = OrganizationMember::withoutGlobalScopes()
+            ->where('organization_id', $organization->id)
+            ->where('user_id', $recipient->id)
+            ->where('status', 'active')
+            ->exists();
+
+        if ($member) {
+            return true;
+        }
+
+        return Tenant::withoutGlobalScopes()
+            ->where('organization_id', $organization->id)
+            ->where('user_id', $recipient->id)
+            ->where('status', 'active')
+            ->exists();
     }
 }

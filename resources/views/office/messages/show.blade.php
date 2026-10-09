@@ -21,8 +21,11 @@
         @csrf
         <label class="visually-hidden" for="reply-body">Répondre</label>
         <textarea id="reply-body" class="field" name="body" placeholder="Répondre" required></textarea>
-        <label class="visually-hidden" for="reply-file">Pièce jointe</label>
-        <input id="reply-file" class="field" type="file" name="attachment">
+        <div class="file-field">
+            <label class="btn btn-ghost mb-0" for="reply-file">Joindre un fichier</label>
+            <span class="file-name" data-file-name>Aucun fichier</span>
+            <input id="reply-file" class="visually-hidden" type="file" name="attachment" accept=".jpg,.jpeg,.png,.webp,.pdf">
+        </div>
         <button class="btn btn-primary">Envoyer</button>
     </form>
 @endsection

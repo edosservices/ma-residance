@@ -27,9 +27,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/inscription/locataire', [SessionController::class, 'storeTenant'])->middleware('throttle:10,1');
 });
 
-Route::post('/deconnexion', [SessionController::class, 'destroy'])->middleware('auth')->name('logout');
+Route::post('/deconnexion', [SessionController::class, 'destroy'])->middleware(['auth', 'private'])->name('logout');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'private'])->group(function () {
     Route::get('/fichiers/{path}', [FileController::class, 'show'])->where('path', '.*')->name('files.show');
     Route::post('/logements/{unit}/demander', [CatalogController::class, 'request'])->name('catalog.request');
 

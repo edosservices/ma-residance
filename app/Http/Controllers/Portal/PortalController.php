@@ -218,7 +218,7 @@ class PortalController extends Controller
     {
         $threads = MessageThread::query()
             ->whereHas('participants', fn ($query) => $query->where('users.id', $context->tenant()->user_id))
-            ->with(['participants', 'messages' => fn ($query) => $query->latest()->limit(1)])
+            ->with(['participants', 'messages' => fn ($query) => $query->reorder()->latest('id')->limit(1)])
             ->latest('updated_at')
             ->get();
         $owner = OrganizationMember::withoutGlobalScopes()->with('user')->where('organization_id', $context->organization()->id)->where('role', 'owner')->first();

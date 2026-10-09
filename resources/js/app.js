@@ -2,6 +2,12 @@ import * as bootstrap from 'bootstrap';
 
 window.bootstrap = bootstrap;
 
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
+
 document.addEventListener('submit', (event) => {
     const message = event.target?.dataset?.confirm;
 
@@ -28,6 +34,20 @@ document.addEventListener('click', (event) => {
     button.setAttribute('aria-label', show ? 'Masquer le mot de passe' : 'Afficher le mot de passe');
     button.querySelector('i')?.classList.toggle('bi-eye', !show);
     button.querySelector('i')?.classList.toggle('bi-eye-slash', show);
+});
+
+document.addEventListener('change', (event) => {
+    const input = event.target;
+
+    if (!(input instanceof HTMLInputElement) || input.type !== 'file') {
+        return;
+    }
+
+    const name = input.closest('.file-field')?.querySelector('[data-file-name]');
+
+    if (name) {
+        name.textContent = input.files?.[0]?.name || 'Aucun fichier';
+    }
 });
 
 document.addEventListener('input', (event) => {

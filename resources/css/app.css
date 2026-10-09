@@ -1627,6 +1627,11 @@ body.theme-admin .offcanvas :focus-visible {
     text-decoration: none;
 }
 
+.thread-row > span:last-child {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
 .thread-row strong,
 .thread-row small {
     display: block;
@@ -1638,7 +1643,7 @@ body.theme-admin .offcanvas :focus-visible {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 16rem;
+    max-width: 100%;
 }
 
 .chat-log {
@@ -1729,14 +1734,55 @@ body.theme-admin .offcanvas .account-menu .btn-ghost {
     color: #fff;
 }
 
+.file-field {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.file-name {
+    min-width: 0;
+    color: var(--mr-muted);
+    font-size: 0.85rem;
+    overflow-wrap: anywhere;
+}
+
 @media (max-width: 991.98px) {
     .inbox {
         grid-template-columns: 1fr;
     }
 }
 
+@media (max-width: 720px) {
+    .period-pills {
+        flex-wrap: wrap;
+        overflow: visible;
+    }
+}
+
 @media (max-width: 575.98px) {
     .site-footer .btn {
         width: 100%;
+    }
+
+    .app-topbar {
+        gap: 0.4rem;
+        padding-inline: 0.55rem;
+    }
+
+    .brand-top {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .account-trigger {
+        max-width: 46px;
+        padding-inline: 0.15rem;
+        gap: 0.15rem;
+    }
+
+    .account-trigger .bi-chevron-down {
+        display: none;
     }
 }

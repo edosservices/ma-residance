@@ -17,7 +17,7 @@ class MessageThread extends Model
 
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class);
+        return $this->hasMany(Message::class)->orderBy('id');
     }
 
     public function participants(): BelongsToMany

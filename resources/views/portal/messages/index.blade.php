@@ -25,9 +25,11 @@
                 <label class="small fw-semibold" for="body">Message
                     <textarea id="body" class="field mt-1" name="body" placeholder="Écrire au bailleur" required></textarea>
                 </label>
-                <label class="small fw-semibold" for="attachment">Pièce jointe
-                    <input id="attachment" class="field mt-1" type="file" name="attachment">
-                </label>
+                <div class="file-field">
+                    <label class="btn btn-ghost mb-0" for="attachment">Joindre un fichier</label>
+                    <span class="file-name" data-file-name>Aucun fichier</span>
+                    <input id="attachment" class="visually-hidden" type="file" name="attachment" accept=".jpg,.jpeg,.png,.webp,.pdf">
+                </div>
                 <button class="btn btn-primary">Envoyer</button>
             </form>
         </section>

@@ -30,8 +30,9 @@ self.addEventListener('fetch', (event) => {
     }
 
     const accept = request.headers.get('accept') || '';
+    const privatePath = /^\/(espace|moi|admin|fichiers|connexion|inscription|deconnexion)(\/|$)/;
 
-    if (request.mode === 'navigate' || accept.includes('text/html')) {
+    if (request.mode === 'navigate' || accept.includes('text/html') || privatePath.test(url.pathname)) {
         return;
     }
 
