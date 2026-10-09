@@ -13,6 +13,7 @@ use App\Models\Invoice;
 use App\Models\OrganizationMember;
 use App\Models\Payment;
 use App\Models\Property;
+use App\Models\Tenant;
 use App\Services\BillingService;
 use App\Services\PaymentService;
 use App\Services\UtilityService;
@@ -106,13 +107,20 @@ class FinanceController extends Controller
         return view('office.payments.index', compact('payments'));
     }
 
-    public function createPayment(CurrentContext $context)
+    public function createPayment()
     {
-        $invoices = Invoice::query()->with('tenant')->whereNotIn('status', ['paid', 'cancelled'])->latest()->limit(100)->get();
+        $invoices = Invoice::query()
+            ->with(['tenant', 'unit'])
+            ->withBalance()
+            ->whereNotIn('status', ['paid', 'cancelled'])
+            ->orderBy('due_on')
+            ->get()
+            ->filter(fn (Invoice $invoice) => $invoice->balanceMinor() > 0)
+            ->values();
 
         return view('office.payments.create', [
+            'tenants' => Tenant::query()->orderBy('name')->get(),
             'invoices' => $invoices,
-            'currencies' => $context->organization()->currencies(),
         ]);
     }
 
@@ -124,6 +132,9 @@ class FinanceController extends Controller
             'method' => ['required', Rule::enum(PaymentMethod::class)],
             'note' => ['nullable', 'string', 'max:500'],
             'proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:4096'],
+        ], [
+            'invoice_id.required' => 'Choisissez le client et la facture à régler.',
+            'amount.required' => 'Indiquez le montant, par exemple 150.00.',
         ]);
         $invoice = Invoice::query()->findOrFail($data['invoice_id']);
         $this->authorize('view', $invoice);
