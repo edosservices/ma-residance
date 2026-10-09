@@ -1,9 +1,17 @@
 @extends('layouts.shell')
 @section('content')
-    <h1 class="text-2xl font-semibold">{{ $tenant->name }}</h1>
-    <p class="text-sm text-muted">{{ $tenant->phone }} @if($tenant->email) · {{ $tenant->email }} @endif</p>
+    <x-page-header :title="$tenant->name" subtitle="Dossier locataire" />
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3"><x-stat label="Téléphone" :value="$tenant->phone" hint="Contact principal" icon="telephone" tone="green" /></div>
+        <div class="col-6 col-md-3"><x-stat label="Email" :value="$tenant->email ?: 'Non renseigné'" hint="Échanges écrits" icon="envelope" tone="info" /></div>
+        <div class="col-6 col-md-3"><x-stat label="Occupants" :value="$tenant->occupants" hint="Personnes dans le logement" icon="people" tone="mauve" /></div>
+        <div class="col-6 col-md-3"><x-stat label="Statut" :value="$tenant->status === 'active' ? 'Actif' : 'Inactif'" hint="Dossier de l'organisation" icon="person-check" tone="warn" /></div>
+    </div>
     @if (allows('tenants.manage') && $tenant->notes)
-        <p class="card mt-3 text-sm">{{ $tenant->notes }}</p>
+        <article class="card mb-4">
+            <p class="kicker">Détails</p>
+            <p class="mb-0">{{ $tenant->notes }}</p>
+        </article>
     @endif
     <h2 class="mt-6 text-sm font-semibold uppercase tracking-wider text-muted">Contrats</h2>
     <div class="mt-2 space-y-2">

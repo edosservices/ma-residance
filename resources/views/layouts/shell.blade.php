@@ -21,11 +21,14 @@
 <body class="theme-{{ $shellTheme }}">
     <div class="app-shell">
         <aside class="app-sidebar d-none d-lg-flex flex-column">
-            <x-logo :href="$home ?? route('home')" class="mb-3" />
-            <div class="app-nav-scroll">
-                @isset($shellNav)
-                    @include($shellNav)
-                @endisset
+            <x-logo :href="$home ?? route('home')" class="sidebar-brand" />
+            <div class="app-nav-frame">
+                <div class="app-nav-scroll">
+                    @isset($shellNav)
+                        @include($shellNav)
+                    @endisset
+                </div>
+                <span class="app-nav-more" aria-hidden="true"><i class="bi bi-chevron-down"></i></span>
             </div>
             @if ($currentUser)
                 @include('partials.account-menu')
