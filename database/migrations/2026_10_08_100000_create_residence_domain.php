@@ -57,7 +57,7 @@ return new class extends Migration
             $table->timestamp('effective_at');
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
-            $table->index(['organization_id', 'base_currency', 'quote_currency', 'effective_at']);
+$table->index(['organization_id', 'base_currency', 'quote_currency', 'effective_at'], 'exchange_rates_org_currency_idx');
         });
 
         Schema::create('expense_categories', function (Blueprint $table) {
@@ -193,7 +193,7 @@ return new class extends Migration
             $table->string('method');
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
-            $table->unique(['organization_id', 'property_id', 'type', 'period_key']);
+            $table->unique(['organization_id', 'property_id', 'type', 'period_key'], 'utility_charge_org_prop_type_period_uq');
         });
 
         Schema::create('invoices', function (Blueprint $table) {
