@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Enums\MemberRole;
 use App\Enums\OrganizationStatus;
 use App\Models\Organization;
 use App\Models\OrganizationMember;
@@ -53,6 +54,7 @@ class EnsureOrganization
             'alerts' => route('office.notifications.index'),
             'eyebrow' => $member->role->label(),
             'shellRole' => 'office',
+            'shellTheme' => $member->role === MemberRole::Collector ? 'collector' : 'landlord',
         ]);
 
         return $next($request);

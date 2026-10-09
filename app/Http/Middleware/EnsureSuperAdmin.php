@@ -24,6 +24,7 @@ class EnsureSuperAdmin
             'alerts' => route('admin.audit'),
             'eyebrow' => 'Super Admin',
             'shellRole' => 'admin',
+            'shellTheme' => 'admin',
         ]);
 
         return $next($request);

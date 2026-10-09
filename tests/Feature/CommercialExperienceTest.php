@@ -17,10 +17,14 @@ class CommercialExperienceTest extends TestCase
     {
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('Gérez vos logements simplement avec Ma Résidence')
+            ->assertSee('La gestion immobilière, avec une nouvelle exigence.')
             ->assertSee('Commencer maintenant')
-            ->assertSee('Découvrir la solution')
-            ->assertSee('Multi-résidences');
+            ->assertSee('Découvrir la plateforme')
+            ->assertSee('Multi-résidences')
+            ->assertSee('EDOS SERVICES')
+            ->assertSee('Solutions numériques et logiciels de gestion conçus pour les entreprises.')
+            ->assertSee('+243 992 749 668')
+            ->assertSee('tel:+243992749668', false);
     }
 
     public function test_a_landlord_dashboard_keeps_financial_labels_and_shows_the_shell(): void
@@ -35,7 +39,8 @@ class CommercialExperienceTest extends TestCase
             ->assertSee('Revenus attendus')
             ->assertSee('Notifications')
             ->assertSee('Locataires en retard')
-            ->assertSee('Déjà remis au bailleur');
+            ->assertSee('Déjà remis au bailleur')
+            ->assertSee('theme-landlord', false);
 
         $this->actingAs($owner)->get(route('office.notifications.index'))->assertOk()->assertSee('Notifications');
     }
@@ -71,7 +76,8 @@ class CommercialExperienceTest extends TestCase
             ->get(route('admin.organizations'))
             ->assertOk()
             ->assertSee('Résidence Amina')
-            ->assertSee('Amina');
+            ->assertSee('Amina')
+            ->assertSee('theme-admin', false);
 
         $landlord = User::query()->where('name', 'Amina')->firstOrFail();
         $this->actingAs($landlord)
