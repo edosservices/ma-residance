@@ -4,18 +4,29 @@
     @if (allows('collections.record'))
         <form method="POST" action="{{ route('office.collections.store') }}" class="card mt-4 space-y-2">
             @csrf
-            <select class="field" name="invoice_id" required>
-                <option value="">Facture</option>
-                @foreach ($invoices as $invoice)
-                    <option value="{{ $invoice->id }}">{{ $invoice->tenant->name }} · {{ $invoice->number }} · {{ money($invoice->amount_minor, $invoice->currency) }}</option>
-                @endforeach
-            </select>
-            <select class="field" name="agent_id">
-                @foreach ($agents as $agent)
-                    <option value="{{ $agent->user_id }}" @selected($agent->user_id === auth()->id())>{{ $agent->user->name }}</option>
-                @endforeach
-            </select>
-            <input class="field" name="amount" placeholder="Montant reçu" required>
+            <div class="field-group mb-2">
+                <label for="collection-invoice">Facture</label>
+                <select id="collection-invoice" class="field" name="invoice_id" required>
+                    <option value="">Ex. Jean Dupont · FAC-00001 · 150.00 USD</option>
+                    @foreach ($invoices as $invoice)
+                        <option value="{{ $invoice->id }}">{{ $invoice->tenant->name }} · {{ $invoice->number }} · {{ money($invoice->amount_minor, $invoice->currency) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="field-group mb-2">
+                <label for="collection-agent">Agent</label>
+                <select id="collection-agent" class="field" name="agent_id" required>
+                    <option value="" disabled @selected(old('agent_id') === null)>Ex. Sarah, agent de recouvrement</option>
+                    @foreach ($agents as $agent)
+                        <option value="{{ $agent->user_id }}" @selected((string) old('agent_id') === (string) $agent->user_id)>{{ $agent->user->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="field-group mb-2">
+                <label for="collection-amount">Montant reçu</label>
+                <input id="collection-amount" class="field" name="amount" inputmode="decimal" value="{{ old('amount') }}" placeholder="Ex. 150.00" required>
+                <span class="field-hint">Ex. 150.00, le montant remis en espèces.</span>
+            </div>
             <button class="btn btn-primary w-full">J'ouvre l'encaissement</button>
         </form>
     @endif

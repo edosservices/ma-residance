@@ -17,29 +17,11 @@
             <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
             <p class="font-semibold">Déclarer un paiement</p>
             <p class="text-muted">Chez {{ $invoice->tenant->name }}@if ($invoice->tenant->phone) · {{ $invoice->tenant->phone }}@endif</p>
-            <div class="field-group mb-2">
-                <label for="invoice-amount">Montant</label>
-                <input id="invoice-amount" class="field" name="amount" inputmode="decimal" value="{{ old('amount', number_format($balance / 100, 2, '.', '')) }}" placeholder="Ex. 150.00" required>
-                <span class="field-hint">Ex. 150.00. Le solde restant est {{ money($balance, $invoice->currency) }}.</span>
-            </div>
-            <div class="field-group mb-2">
-                <label for="invoice-method">Moyen</label>
-                <select id="invoice-method" class="field" name="method">
-                    <option value="cash">Espèces</option>
-                    <option value="transfer">Transfert</option>
-                    <option value="other">Autre</option>
-                </select>
-                <span class="field-hint">Ex. Espèces si le client paie au bureau.</span>
-            </div>
-            <div class="field-group mb-2">
-                <label for="invoice-note">Note</label>
-                <input id="invoice-note" class="field" name="note" maxlength="500" placeholder="Ex. Loyer d'octobre, reçu en espèces au bureau">
-            </div>
-            <div class="field-group mb-3">
-                <label for="invoice-proof">Preuve</label>
-                <input id="invoice-proof" class="field" type="file" name="proof" accept="image/*,.pdf">
-                <span class="field-hint">Ex. photo du reçu ou capture du transfert.</span>
-            </div>
+            <x-payment-declare-fields
+                prefix="invoice"
+                :amount-placeholder="'Ex. '.number_format($balance / 100, 2, '.', '')"
+                :amount-hint="'Ex. '.number_format($balance / 100, 2, '.', '').'. Le solde restant est '.money($balance, $invoice->currency).'.'"
+            />
             <button class="btn btn-primary w-100">Enregistrer</button>
         </form>
     @endif
@@ -48,12 +30,20 @@
             @csrf
             <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
             <p class="font-semibold">Encaisser en espèces</p>
-            <select class="field" name="agent_id">
-                @foreach ($agents as $agent)
-                    <option value="{{ $agent->user_id }}" @selected($agent->user_id === auth()->id())>{{ $agent->user->name }}</option>
-                @endforeach
-            </select>
-            <input class="field" name="amount" value="{{ number_format($balance / 100, 2, '.', '') }}">
+            <div class="field-group mb-2">
+                <label for="cash-agent">Agent</label>
+                <select id="cash-agent" class="field" name="agent_id" required>
+                    <option value="" disabled @selected(old('agent_id') === null)>Ex. Sarah, agent de recouvrement</option>
+                    @foreach ($agents as $agent)
+                        <option value="{{ $agent->user_id }}" @selected((string) old('agent_id') === (string) $agent->user_id)>{{ $agent->user->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="field-group mb-2">
+                <label for="cash-office-amount">Montant reçu</label>
+                <input id="cash-office-amount" class="field" name="amount" inputmode="decimal" value="{{ old('amount') }}" placeholder="Ex. {{ number_format($balance / 100, 2, '.', '') }}" required>
+                <span class="field-hint">Ex. {{ number_format($balance / 100, 2, '.', '') }}. Le solde restant est {{ money($balance, $invoice->currency) }}.</span>
+            </div>
             <button class="btn btn-ghost w-full">Ouvrir l'encaissement</button>
         </form>
     @endif

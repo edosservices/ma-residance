@@ -581,6 +581,24 @@ select.field {
     color: var(--mr-bad);
 }
 
+.file-example {
+    position: relative;
+    display: flex;
+    align-items: center;
+    color: var(--mr-muted);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.file-example input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-example.is-filled { color: var(--mr-ink); }
+
 .field:focus {
     border-color: var(--mr-accent, var(--mr-green));
     outline: none;

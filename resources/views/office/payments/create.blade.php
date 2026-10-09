@@ -7,7 +7,7 @@
         <form method="POST" action="{{ route('office.payments.store') }}" enctype="multipart/form-data" class="mt-4" id="declare-payment">
             @csrf
             <label class="small fw-semibold" for="client-filter">Rechercher un client
-                <input id="client-filter" class="field mt-1" type="search" placeholder="Ex. Jean Dupont ou 0820000001" autocomplete="off">
+                <input id="client-filter" class="field mt-1" type="search" placeholder="Ex. Jean ou 0820000001" autocomplete="off">
             </label>
             <p class="field-hint mb-3">Le paiement est enregistré chez la personne choisie, sur sa facture ouverte.</p>
 
@@ -40,29 +40,8 @@
                 @endforeach
             </div>
 
-            <div class="field-group mt-3">
-                <label for="payment-amount">Montant</label>
-                <input id="payment-amount" class="field" name="amount" inputmode="decimal" value="{{ old('amount') }}" placeholder="Ex. 150.00" required>
-                <span class="field-hint">Ex. 150.00 pour cent cinquante. Le solde de la facture choisie est proposé, un montant plus petit reste possible.</span>
-            </div>
-            <div class="field-group mt-3">
-                <label for="payment-method">Moyen</label>
-                <select id="payment-method" class="field" name="method" required>
-                    <option value="cash" @selected(old('method', 'cash') === 'cash')>Espèces</option>
-                    <option value="transfer" @selected(old('method') === 'transfer')>Transfert</option>
-                    <option value="other" @selected(old('method') === 'other')>Autre</option>
-                </select>
-                <span class="field-hint">Ex. Espèces si le client paie au bureau, Transfert s'il envoie l'argent.</span>
-            </div>
-            <div class="field-group mt-3">
-                <label for="payment-note">Note</label>
-                <input id="payment-note" class="field" name="note" value="{{ old('note') }}" maxlength="500" placeholder="Ex. Loyer d'octobre, reçu en espèces au bureau">
-                <span class="field-hint">Ex. Loyer d'octobre, reçu en espèces au bureau.</span>
-            </div>
-            <div class="field-group mt-3">
-                <label for="payment-proof">Preuve</label>
-                <input id="payment-proof" class="field" type="file" name="proof" accept="image/*,.pdf">
-                <span class="field-hint">Ex. photo du reçu ou capture du transfert. Facultatif pour un encaissement au bureau.</span>
+            <div class="mt-3">
+                <x-payment-declare-fields prefix="payment" amount-placeholder="Ex. 150.00" amount-hint="Ex. 150.00. Après le choix du client, l'exemple devient le solde de sa facture." />
             </div>
             <button class="btn btn-primary w-100 mt-3" @disabled($invoices->isEmpty())>Déclarer</button>
             @if ($invoices->isEmpty())
@@ -79,14 +58,14 @@
 
                 const applyBalance = () => {
                     const chosen = radios.find((radio) => radio.checked);
-                    if (chosen && !amount.value) {
-                        amount.value = chosen.dataset.balance;
+                    if (chosen) {
+                        amount.placeholder = 'Ex. ' + chosen.dataset.balance;
                     }
                 };
 
                 radios.forEach((radio) => {
                     radio.addEventListener('change', () => {
-                        amount.value = radio.dataset.balance;
+                        amount.placeholder = 'Ex. ' + radio.dataset.balance;
                     });
                 });
 
