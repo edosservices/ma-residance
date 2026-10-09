@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\UnitStatus;
+use App\Models\Tenant;
 use App\Models\Unit;
 use App\Services\ContractService;
 use App\Support\HomeRedirect;
@@ -30,6 +31,17 @@ class CatalogController extends Controller
 
     public function index(Request $request)
     {
+        if ($request->user() && ! $request->boolean('parcourir')) {
+            $hasTenant = Tenant::withoutGlobalScopes()
+                ->where('user_id', $request->user()->id)
+                ->where('status', 'active')
+                ->exists();
+
+            if ($hasTenant) {
+                return redirect()->route('portal.dashboard');
+            }
+        }
+
         $units = Unit::withoutGlobalScopes()
             ->with('property.organization')
             ->where('status', UnitStatus::Available)

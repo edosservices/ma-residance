@@ -79,7 +79,7 @@
                 </div>
             </header>
             @if (($shellTheme ?? '') === 'tenant')
-                <nav class="portal-topnav d-none d-xl-block" aria-label="Espace locataire">
+                <nav class="portal-topnav d-none d-lg-block" aria-label="Espace locataire">
                     @isset($shellNav)
                         @include($shellNav)
                     @endisset

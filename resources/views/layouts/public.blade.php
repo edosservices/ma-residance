@@ -68,37 +68,41 @@
         @yield('content')
     </main>
     <footer class="site-footer">
-        <div class="container py-5">
-            <div class="row g-4 g-lg-5">
-                <div class="col-lg-5">
+        <div class="container">
+            <div class="footer-frame">
+                <div class="footer-brand">
                     <img class="edos-logo" src="{{ asset('images/edos-services-logo.png') }}" alt="EDOS SERVICES" width="2000" height="667">
-                    <p class="mt-3 mb-2 fw-semibold text-white">EDOS SERVICES</p>
-                    <p class="mb-0">Solutions numériques et logiciels de gestion conçus pour les entreprises.</p>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <p class="kicker">Ma Résidence</p>
-                    <x-logo href="{{ route('home') }}" tone="light" class="mb-3" />
-                    <p class="mb-0">Plateforme de gestion immobilière pour les biens, les locataires, les contrats, les loyers et le suivi financier.</p>
-                </div>
-                <div class="col-md-6 col-lg-4">
-                    <p class="kicker">Accès</p>
-                    <div class="d-grid gap-2 mb-3">
-                        <a href="{{ route('home') }}"><i class="bi bi-house me-2" aria-hidden="true"></i>Accueil</a>
-                        <a href="{{ route('home') }}#fonctionnalites"><i class="bi bi-grid me-2" aria-hidden="true"></i>Fonctionnalités</a>
-                        <a href="{{ route('login') }}"><i class="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>Connexion</a>
-                        <a href="{{ route('register.landlord') }}"><i class="bi bi-building-add me-2" aria-hidden="true"></i>Inscription bailleur</a>
-                        <a href="{{ route('register.tenant') }}"><i class="bi bi-person-add me-2" aria-hidden="true"></i>Inscription locataire</a>
+                    <div>
+                        <p class="footer-name">EDOS SERVICES</p>
+                        <p class="mb-0">Solutions numériques et logiciels de gestion conçus pour les entreprises.</p>
                     </div>
-                    <button type="button" class="btn btn-ghost d-none mb-2" data-pwa-install>Installer l'application</button>
-                    <p class="small d-none mb-2" data-pwa-ios>Sur iPhone : Partager, puis « Sur l'écran d'accueil ».</p>
-                    <a class="btn btn-light" href="tel:+243992749668">
-                        <i class="bi bi-telephone" aria-hidden="true"></i>
-                        <span>+243 992 749 668</span>
-                    </a>
+                </div>
+                <div>
+                    <p class="kicker">Ma Résidence</p>
+                    <nav class="footer-links" aria-label="Pages de l'accueil">
+                        <a href="{{ route('home') }}#plateforme">La plateforme</a>
+                        <a href="{{ route('home') }}#fonctionnalites">Fonctionnalités</a>
+                        <a href="{{ route('home') }}#biens">Biens et unités</a>
+                        <a href="{{ route('home') }}#loyers">Loyers</a>
+                        <a href="{{ route('home') }}#charges">Charges</a>
+                        <a href="{{ route('home') }}#maintenance">Maintenance</a>
+                    </nav>
+                </div>
+                <div>
+                    <p class="kicker">Accès</p>
+                    <nav class="footer-links" aria-label="Accès">
+                        <a href="{{ route('home') }}">Accueil</a>
+                        <a href="{{ route('catalog.index', ['parcourir' => 1]) }}">Logements</a>
+                        <a href="{{ route('login') }}">Connexion</a>
+                        <a href="{{ route('register.landlord') }}">Inscription bailleur</a>
+                        <a href="{{ route('register.tenant') }}">Inscription locataire</a>
+                        <a class="footer-phone" href="tel:+243992749668"><i class="bi bi-telephone" aria-hidden="true"></i><span>+243 992 749 668</span></a>
+                    </nav>
+                    <button type="button" class="footer-install d-none" data-pwa-install>Installer l'application</button>
+                    <p class="footer-ios d-none mb-0" data-pwa-ios>Sur iPhone : Partager, puis « Sur l'écran d'accueil ».</p>
                 </div>
             </div>
-            <hr class="footer-rule">
-            <div class="d-flex flex-wrap justify-content-between gap-2 small">
+            <div class="footer-bar">
                 <p class="mb-0">© {{ now()->year }} EDOS SERVICES</p>
                 <p class="mb-0">Photographies : Unsplash</p>
             </div>
