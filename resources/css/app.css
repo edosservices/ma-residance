@@ -2256,8 +2256,8 @@ body.theme-admin .app-sidebar .account-link:hover {
 
 .portal-trace li {
     display: flex;
-    justify-content: space-between;
-    gap: 0.4rem;
+    flex-direction: column;
+    gap: 0.05rem;
     min-width: 0;
     font-size: 0.75rem;
     line-height: 1.3;

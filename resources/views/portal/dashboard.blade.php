@@ -31,7 +31,13 @@
                 <p class="portal-meta">Déjà réglé {{ money($paid, $currency) }}@if ($next) · prochaine échéance {{ $next->due_on->format('d/m/Y') }}@endif</p>
                 <p class="portal-meta">Dernière mise à jour le {{ $asOf->format('d/m/Y à H:i') }}</p>
                 <p class="mb-0">
-                    <x-badge :tone="$daysLate > 0 ? 'bad' : 'good'">{{ $daysLate > 0 ? $daysLate.' jour'.($daysLate > 1 ? 's' : '').' de retard' : 'À jour' }}</x-badge>
+                    @php
+                        $balanceTone = $daysLate > 0 ? 'bad' : ($due > 0 ? 'warn' : 'good');
+                        $balanceLabel = $daysLate > 0
+                            ? $daysLate.' jour'.($daysLate > 1 ? 's' : '').' de retard'
+                            : ($due > 0 ? 'Solde ouvert' : 'À jour');
+                    @endphp
+                    <x-badge :tone="$balanceTone">{{ $balanceLabel }}</x-badge>
                 </p>
                 <ul class="portal-trace">
                     <li><span>Déjà payé</span><strong class="tabular">{{ money($paid, $currency) }}</strong></li>
