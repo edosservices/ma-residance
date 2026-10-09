@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Contract;
 use App\Models\Expense;
 use App\Models\MaintenanceRequest;
 use App\Models\MaintenanceUpdate;
 use App\Models\Message;
 use App\Models\MoveOutRequest;
+use App\Models\Organization;
 use App\Models\OrganizationMember;
 use App\Models\Payment;
 use App\Models\Property;
+use App\Models\RecognitionDeed;
 use App\Models\Tenant;
 use App\Models\Unit;
 use Illuminate\Http\Request;
@@ -23,7 +26,7 @@ class FileController extends Controller
     {
         $path = str_replace('\\', '/', $path);
 
-        if (str_contains($path, '..') || ! preg_match('#^(proofs|maintenance|expenses|messages|moveouts|properties|units)/#', $path)) {
+        if (str_contains($path, '..') || ! preg_match('#^(proofs|maintenance|expenses|messages|moveouts|properties|units|contracts|certificates|deeds)/#', $path)) {
             abort(404);
         }
 
@@ -67,7 +70,11 @@ class FileController extends Controller
             ?? Message::withoutGlobalScopes()->where('attachment_path', $path)->value('organization_id')
             ?? MoveOutRequest::withoutGlobalScopes()->where('photo_path', $path)->value('organization_id')
             ?? Property::withoutGlobalScopes()->where('photo_path', $path)->value('organization_id')
-            ?? Unit::withoutGlobalScopes()->where('photo_path', $path)->value('organization_id');
+            ?? Unit::withoutGlobalScopes()->where('photo_path', $path)->value('organization_id')
+            ?? Contract::withoutGlobalScopes()->where('attachment_path', $path)->value('organization_id')
+            ?? RecognitionDeed::withoutGlobalScopes()->where('identity_path', $path)->value('organization_id')
+            ?? RecognitionDeed::withoutGlobalScopes()->where('certificate_path', $path)->value('organization_id')
+            ?? Organization::query()->where('settings->certificate_path', $path)->value('id');
     }
 
     private function messageParticipant(int $userId, string $path): bool
@@ -92,6 +99,9 @@ class FileController extends Controller
         return Payment::withoutGlobalScopes()->where('proof_path', $path)->whereIn('tenant_id', $tenantIds)->exists()
             || MaintenanceRequest::withoutGlobalScopes()->where('photo_path', $path)->whereIn('tenant_id', $tenantIds)->exists()
             || MoveOutRequest::withoutGlobalScopes()->where('photo_path', $path)->whereIn('tenant_id', $tenantIds)->exists()
+            || Contract::withoutGlobalScopes()->where('attachment_path', $path)->whereIn('tenant_id', $tenantIds)->exists()
+            || RecognitionDeed::withoutGlobalScopes()->where('identity_path', $path)->whereHas('contract', fn ($query) => $query->withoutGlobalScopes()->whereIn('tenant_id', $tenantIds))->exists()
+            || RecognitionDeed::withoutGlobalScopes()->where('certificate_path', $path)->whereHas('contract', fn ($query) => $query->withoutGlobalScopes()->whereIn('tenant_id', $tenantIds))->exists()
             || Message::withoutGlobalScopes()
                 ->where('attachment_path', $path)
                 ->whereHas('thread.participants', fn ($query) => $query->where('users.id', $userId))

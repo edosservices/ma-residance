@@ -11,7 +11,9 @@ use App\Models\Tenant;
 use App\Models\Unit;
 use App\Services\Billing\ProrataManager;
 use App\Services\ContractService;
+use App\Services\RecognitionService;
 use App\Support\CurrentContext;
+use App\Support\DeedPdf;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -44,6 +46,7 @@ class ContractController extends Controller
             'rent' => ['required', 'string', 'max:20'],
             'currency' => ['required', Rule::in($context->organization()->currencies())],
             'conditions' => ['nullable', 'string', 'max:5000'],
+            'attachment' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:8192'],
         ]);
 
         $contracts->accept($rentalRequest, $request->user(), [
@@ -52,6 +55,7 @@ class ContractController extends Controller
             'rent_minor' => Money::toMinor($data['rent']),
             'currency' => $data['currency'],
             'conditions' => $data['conditions'] ?? null,
+            'attachment_path' => store_upload($request->file('attachment'), 'contracts'),
         ]);
 
         return redirect()->route('office.contracts.index')->with('status', 'Demande acceptée. Le contrat est créé.');
@@ -69,11 +73,15 @@ class ContractController extends Controller
     {
         $contracts = Contract::query()->with('tenant', 'unit')->latest()->paginate(20);
 
+        $organization = app(CurrentContext::class)->organization();
+
         return view('office.contracts.index', [
             'contracts' => $contracts,
             'tenants' => Tenant::query()->orderBy('name')->get(),
             'units' => Unit::query()->where('status', 'available')->orderBy('name')->get(),
-            'currencies' => app(CurrentContext::class)->organization()->currencies(),
+            'currencies' => $organization->currencies(),
+            'depositMonths' => (int) $organization->preference('guarantee_deposit_months', 3),
+            'advanceMonths' => (int) $organization->preference('guarantee_advance_months', 1),
         ]);
     }
 
@@ -83,10 +91,11 @@ class ContractController extends Controller
             'tenant_id' => ['required', 'integer'],
             'unit_id' => ['required', 'integer'],
             'start_date' => ['required', 'date'],
-            'end_date' => ['nullable', 'date'],
+            'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'rent' => ['required', 'string', 'max:20'],
             'currency' => ['required', Rule::in($context->organization()->currencies())],
             'conditions' => ['nullable', 'string', 'max:5000'],
+            'attachment' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:8192'],
         ]);
 
         $tenant = Tenant::query()->findOrFail($data['tenant_id']);
@@ -97,10 +106,12 @@ class ContractController extends Controller
             $tenant,
             $request->user(),
             CarbonImmutable::parse($data['start_date']),
-            $data['end_date'] ? CarbonImmutable::parse($data['end_date']) : null,
+            ($data['end_date'] ?? null) ? CarbonImmutable::parse($data['end_date']) : null,
             Money::toMinor($data['rent']),
             $data['currency'],
             $data['conditions'] ?? null,
+            false,
+            store_upload($request->file('attachment'), 'contracts'),
         );
 
         return redirect()->route('office.contracts.show', $contract)->with('status', 'Contrat créé.');
@@ -109,11 +120,13 @@ class ContractController extends Controller
     public function show(Contract $contract, ProrataManager $prorata)
     {
         $this->authorize('view', $contract);
-        $contract->load('tenant', 'unit.property', 'invoices');
+        $contract->load('tenant', 'unit.property', 'invoices', 'recognitionDeed', 'organization');
 
         return view('office.contracts.show', [
             'contract' => $contract,
             'prorata' => $prorata->options(),
+            'deedDefaults' => app(RecognitionService::class)->defaults($contract),
+            'hasCertificate' => (string) $contract->organization->preference('certificate_code', '') !== '',
         ]);
     }
 
@@ -131,5 +144,70 @@ class ContractController extends Controller
         $contracts->updateTerms($contract, $request->user(), $data);
 
         return back()->with('status', 'Conditions mises à jour. Le loyer historique est inchangé.');
+    }
+
+    public function storeDeed(Request $request, Contract $contract, RecognitionService $deeds)
+    {
+        $this->authorize('manage', $contract);
+        $data = $request->validate([
+            'payee_name' => ['required', 'string', 'max:160'],
+            'deposit_months' => ['required', 'integer', 'min:0', 'max:24'],
+            'advance_months' => ['required', 'integer', 'min:0', 'max:12'],
+            'identity_document' => ['nullable', 'string', 'max:120'],
+            'identity' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:8192'],
+            'origin' => ['nullable', 'string', 'max:160'],
+            'premises' => ['required', 'string', 'max:255'],
+            'landlord_witnesses' => ['nullable', 'string', 'max:500'],
+            'tenant_witnesses' => ['nullable', 'string', 'max:500'],
+            'certify' => ['required', 'boolean'],
+        ]);
+        $data['identity_path'] = store_upload($request->file('identity'), 'deeds');
+        $deeds->record($contract, $request->user(), $data, $request->boolean('certify'));
+
+        return back()->with('status', $request->boolean('certify')
+            ? 'Acte de reconnaissance certifié. Le bailleur et le locataire ont chacun leur copie.'
+            : 'Acte de reconnaissance enregistré. Il n\'est pas encore certifié.');
+    }
+
+    public function deed(Contract $contract)
+    {
+        $this->authorize('view', $contract);
+
+        return view('documents.recognition', $this->deedView($contract, 'bailleur'));
+    }
+
+    public function deedPdf(Contract $contract, DeedPdf $pdf)
+    {
+        $this->authorize('view', $contract);
+        $deed = $this->certifiedDeed($contract);
+
+        return response($pdf->render($deed, 'bailleur'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$deed->reference.'-bailleur.pdf"',
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function deedView(Contract $contract, string $copy): array
+    {
+        $deed = $this->certifiedDeed($contract);
+        $deed->load('contract.tenant', 'contract.unit.property', 'organization');
+
+        return [
+            'deed' => $deed,
+            'copy' => $copy,
+            'pdf' => $copy === 'locataire' ? route('portal.deed.pdf') : route('office.contracts.deed.pdf', $contract),
+        ];
+    }
+
+    private function certifiedDeed(Contract $contract): \App\Models\RecognitionDeed
+    {
+        $deed = $contract->recognitionDeed()->first();
+
+        abort_unless($deed?->isCertified(), 404);
+
+        return $deed;
     }
 }

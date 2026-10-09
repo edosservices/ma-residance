@@ -99,6 +99,22 @@ document.addEventListener('DOMContentLoaded', () => {
         bootstrap.Modal.getOrCreateInstance(element).show();
     });
 
+    document.querySelectorAll('.file-example input[type="file"]').forEach((input) => {
+        if (input.dataset.bound) {
+            return;
+        }
+        input.dataset.bound = '1';
+        input.addEventListener('change', () => {
+            const label = input.parentElement.querySelector('[data-file-label]');
+            const name = input.files && input.files[0] ? input.files[0].name : '';
+            if (!label) {
+                return;
+            }
+            label.textContent = name || label.dataset.empty || label.textContent;
+            input.parentElement.classList.toggle('is-filled', name !== '');
+        });
+    });
+
     const ios = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
     const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 

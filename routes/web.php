@@ -72,6 +72,9 @@ Route::middleware(['auth', 'private'])->group(function () {
             Route::post('/contrats', [ContractController::class, 'store'])->middleware('perm:contracts.manage')->name('contracts.store');
             Route::get('/contrats/{contract}', [ContractController::class, 'show'])->name('contracts.show');
             Route::put('/contrats/{contract}', [ContractController::class, 'update'])->middleware('perm:contracts.manage')->name('contracts.update');
+            Route::post('/contrats/{contract}/acte', [ContractController::class, 'storeDeed'])->middleware('perm:contracts.manage')->name('contracts.deed.store');
+            Route::get('/contrats/{contract}/acte', [ContractController::class, 'deed'])->name('contracts.deed');
+            Route::get('/contrats/{contract}/acte.pdf', [ContractController::class, 'deedPdf'])->name('contracts.deed.pdf');
         });
 
         Route::middleware('perm:invoices.view|invoices.manage|payments.view')->group(function () {
@@ -148,6 +151,8 @@ Route::middleware(['auth', 'private'])->group(function () {
         Route::get('/', [PortalController::class, 'dashboard'])->middleware('tenant')->name('dashboard');
         Route::middleware('tenant')->group(function () {
             Route::get('/contrat', [PortalController::class, 'contract'])->name('contract');
+            Route::get('/contrat/acte', [PortalController::class, 'deed'])->name('deed');
+            Route::get('/contrat/acte.pdf', [PortalController::class, 'deedPdf'])->name('deed.pdf');
             Route::get('/factures', [PortalController::class, 'invoices'])->name('invoices.index');
             Route::get('/factures/{invoice}', [PortalController::class, 'showInvoice'])->name('invoices.show');
             Route::post('/factures/{invoice}/declarer', [PortalController::class, 'declarePayment'])->name('payments.declare');

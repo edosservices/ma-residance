@@ -10,6 +10,7 @@ use App\Support\DomainException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Contract extends Model
 {
@@ -20,7 +21,8 @@ class Contract extends Model
         'start_date', 'end_date', 'rent_minor', 'currency', 'exchange_rate_id',
         'fx_base_currency', 'fx_quote_currency', 'fx_rate', 'equivalent_minor',
         'equivalent_currency', 'billing_cycle', 'generation_day', 'due_day',
-        'grace_until_day', 'prorata_method', 'conditions', 'status', 'activated_at',
+        'grace_until_day', 'prorata_method', 'conditions', 'attachment_path',
+        'guarantee_deposit_months', 'guarantee_advance_months', 'status', 'activated_at',
         'terminated_at', 'created_by',
     ];
 
@@ -83,5 +85,20 @@ class Contract extends Model
     public function moveOutRequests(): HasMany
     {
         return $this->hasMany(MoveOutRequest::class);
+    }
+
+    public function recognitionDeed(): HasOne
+    {
+        return $this->hasOne(RecognitionDeed::class);
+    }
+
+    public function guaranteeDepositMonths(): int
+    {
+        return (int) ($this->guarantee_deposit_months ?? $this->organization?->preference('guarantee_deposit_months', 3) ?? 3);
+    }
+
+    public function guaranteeAdvanceMonths(): int
+    {
+        return (int) ($this->guarantee_advance_months ?? $this->organization?->preference('guarantee_advance_months', 1) ?? 1);
     }
 }
