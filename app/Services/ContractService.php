@@ -122,6 +122,7 @@ class ContractService
                 $terms['currency'],
                 $terms['conditions'] ?? null,
                 true,
+                $terms['attachment_path'] ?? null,
             );
 
             $request->status = RentalRequestStatus::Accepted;
@@ -153,6 +154,7 @@ class ContractService
         string $currency,
         ?string $conditions = null,
         bool $fromRequest = false,
+        ?string $attachmentPath = null,
     ): Contract {
         if ($rentMinor <= 0) {
             throw new DomainException('Le loyer doit être positif.');
@@ -162,7 +164,7 @@ class ContractService
             throw new DomainException('Cette devise n\'est pas activée.');
         }
 
-        return DB::transaction(function () use ($organization, $unit, $tenant, $actor, $start, $end, $rentMinor, $currency, $conditions, $fromRequest) {
+        return DB::transaction(function () use ($organization, $unit, $tenant, $actor, $start, $end, $rentMinor, $currency, $conditions, $fromRequest, $attachmentPath) {
             $unit = Unit::withoutGlobalScopes()->lockForUpdate()->findOrFail($unit->id);
 
             $allowed = $fromRequest
@@ -208,6 +210,9 @@ class ContractService
                 'grace_until_day' => (int) $organization->preference('grace_until_day'),
                 'prorata_method' => (string) $organization->preference('prorata_method'),
                 'conditions' => $conditions,
+                'attachment_path' => $attachmentPath,
+                'guarantee_deposit_months' => (int) $organization->preference('guarantee_deposit_months', 3),
+                'guarantee_advance_months' => (int) $organization->preference('guarantee_advance_months', 1),
                 'status' => $activeNow ? ContractStatus::Active : ContractStatus::Pending,
                 'activated_at' => $activeNow ? $today : null,
                 'created_by' => $actor->id,

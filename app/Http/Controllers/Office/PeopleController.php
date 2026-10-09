@@ -153,10 +153,22 @@ class PeopleController extends Controller
             'reminder_repeat_days' => ['required', 'integer', 'min:1', 'max:30'],
             'default_currency' => ['required', Rule::in($context->organization()->currencies())],
             'share_declaration_trace' => ['nullable', 'boolean'],
+            'guarantee_deposit_months' => ['required', 'integer', 'min:0', 'max:24'],
+            'guarantee_advance_months' => ['required', 'integer', 'min:0', 'max:12'],
+            'certificate_holder' => ['nullable', 'string', 'max:120', 'required_with:certificate'],
+            'certificate' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
         $data['share_declaration_trace'] = $request->boolean('share_declaration_trace');
+        unset($data['certificate']);
 
         $organization = $context->organization();
+        $certificate = store_upload($request->file('certificate'), 'certificates');
+
+        if ($certificate !== null) {
+            $data['certificate_path'] = $certificate;
+            $data['certificate_code'] = $organization->preference('certificate_code') ?: 'CERT-'.strtoupper(substr(hash('sha256', $certificate.$organization->id), 0, 8));
+        }
+
         $organization->settings = array_merge($organization->settings ?? [], $data);
         $organization->save();
         $audit->log($organization->id, $request->user(), 'settings.updated', $organization, 'A modifié les paramètres de facturation.');

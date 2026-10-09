@@ -1,7 +1,7 @@
 @extends('layouts.shell')
 @section('content')
     <h1 class="text-2xl font-semibold">Paramètres</h1>
-    <form method="POST" action="{{ route('office.settings.update') }}" class="mt-4 space-y-2">
+    <form method="POST" action="{{ route('office.settings.update') }}" class="mt-4 space-y-2" enctype="multipart/form-data">
         @csrf
         @method('PUT')
         <label class="block text-sm">Jour de génération<input class="field" type="number" name="generation_day" min="1" max="28" value="{{ $organization->preference('generation_day') }}"></label>
@@ -28,6 +28,32 @@
             Montrer la traçabilité des déclarations au locataire
         </label>
         <p class="field-hint">Le détail reste chez le bailleur. Cochez pour l'afficher aussi dans l'espace locataire. Pour un collaborateur, utilisez le droit « Voir la traçabilité des déclarations ».</p>
+        <h2 class="pt-3 text-lg font-semibold">Garantie locative</h2>
+        <p class="field-hint">La formule 3 + 1 signifie 3 mois de caution et 1 mois payé d'avance. Changez les deux nombres pour une autre formule, par exemple 2 + 1.</p>
+        <label class="block text-sm">Mois de caution
+            <input class="field" type="number" name="guarantee_deposit_months" min="0" max="24" value="{{ old('guarantee_deposit_months', $organization->preference('guarantee_deposit_months')) }}" required>
+            <span class="field-hint">Ex. 3. C'est le premier nombre de la formule.</span>
+        </label>
+        <label class="block text-sm">Mois payés d'avance
+            <input class="field" type="number" name="guarantee_advance_months" min="0" max="12" value="{{ old('guarantee_advance_months', $organization->preference('guarantee_advance_months')) }}" required>
+            <span class="field-hint">Ex. 1. C'est le second nombre. La formule affichée sera {{ (int) old('guarantee_deposit_months', $organization->preference('guarantee_deposit_months')) }} + {{ (int) old('guarantee_advance_months', $organization->preference('guarantee_advance_months')) }}.</span>
+        </label>
+        <h2 class="pt-3 text-lg font-semibold">Certificat numérique</h2>
+        <p class="field-hint">Ce certificat est apposé sur l'acte de reconnaissance pour montrer qu'il est validé. Importez une image de signature ou de cachet, et le nom de celui qui signe.</p>
+        <label class="block text-sm">Nom du signataire
+            <input class="field" name="certificate_holder" value="{{ old('certificate_holder', $organization->preference('certificate_holder')) }}" maxlength="120" placeholder="Ex. Omar, bailleur de Chez Omar">
+            <span class="field-hint">Ex. Omar, bailleur de Chez Omar. C'est le nom qui affirme l'acte.</span>
+        </label>
+        <label class="block text-sm">Image du certificat
+            <input class="field" type="file" name="certificate" accept="image/*">
+            <span class="field-hint">Ex. photo de la signature ou du cachet. Image JPG ou PNG.</span>
+        </label>
+        @if ($organization->preference('certificate_code'))
+            <p class="text-sm">Certificat en place : <strong>{{ $organization->preference('certificate_code') }}</strong>@if ($organization->preference('certificate_holder')) · {{ $organization->preference('certificate_holder') }}@endif</p>
+            @if ($organization->preference('certificate_path'))
+                <img src="{{ file_url($organization->preference('certificate_path')) }}" alt="Certificat numérique du bailleur" style="max-width: 180px; max-height: 80px;">
+            @endif
+        @endif
         <button class="btn btn-primary w-full">Enregistrer</button>
     </form>
     <h2 class="mt-8 text-lg font-semibold">Taux de change</h2>

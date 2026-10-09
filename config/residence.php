@@ -22,6 +22,8 @@ return [
         'default_currency' => 'USD',
         'enabled_currencies' => ['USD', 'CDF'],
         'share_declaration_trace' => false,
+        'guarantee_deposit_months' => 3,
+        'guarantee_advance_months' => 1,
     ],
 
     'unit_types' => [

@@ -22,6 +22,7 @@ use App\Services\CashCollectionService;
 use App\Services\MaintenanceService;
 use App\Services\MessageService;
 use App\Services\MoveOutService;
+use App\Support\DeedPdf;
 use App\Models\Payment;
 use App\Services\PaymentService;
 use App\Services\ReportingService;
@@ -88,9 +89,50 @@ class PortalController extends Controller
 
     public function contract(CurrentContext $context)
     {
-        $contract = Contract::query()->with('unit.property')->where('tenant_id', $context->tenant()->id)->latest('start_date')->first();
+        $contract = Contract::query()->with('unit.property', 'recognitionDeed')->where('tenant_id', $context->tenant()->id)->latest('start_date')->first();
 
         return view('portal.contract', compact('contract'));
+    }
+
+    public function deed(CurrentContext $context)
+    {
+        $contract = $this->tenantContract($context);
+
+        $deed = $this->certifiedDeed($contract);
+        $deed->load('contract.tenant', 'contract.unit.property', 'organization');
+
+        return view('documents.recognition', [
+            'deed' => $deed,
+            'copy' => 'locataire',
+            'pdf' => route('portal.deed.pdf'),
+        ]);
+    }
+
+    public function deedPdf(CurrentContext $context, DeedPdf $pdf)
+    {
+        $contract = $this->tenantContract($context);
+        $deed = $this->certifiedDeed($contract);
+
+        return response($pdf->render($deed, 'locataire'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$deed->reference.'-locataire.pdf"',
+        ]);
+    }
+
+    private function tenantContract(CurrentContext $context): Contract
+    {
+        return Contract::query()
+            ->with('unit.property', 'tenant', 'recognitionDeed', 'organization')
+            ->where('tenant_id', $context->tenant()->id)
+            ->latest('start_date')
+            ->firstOrFail();
+    }
+
+    private function certifiedDeed(Contract $contract): \App\Models\RecognitionDeed
+    {
+        abort_unless($contract->recognitionDeed?->isCertified(), 404);
+
+        return $contract->recognitionDeed;
     }
 
     public function invoices(CurrentContext $context)
