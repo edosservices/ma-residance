@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Portal;
 
-use App\Enums\InvoiceType;
 use App\Enums\MaintenanceUrgency;
+use App\Enums\PaymentStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\Permission;
 use App\Http\Controllers\Controller;
@@ -25,7 +25,6 @@ use App\Services\MoveOutService;
 use App\Support\DeedPdf;
 use App\Models\Payment;
 use App\Services\PaymentService;
-use App\Services\ReportingService;
 use App\Support\CurrentContext;
 use App\Support\Money;
 use Carbon\CarbonImmutable;
@@ -34,47 +33,33 @@ use Illuminate\Validation\Rule;
 
 class PortalController extends Controller
 {
-    public function dashboard(CurrentContext $context, BillingService $billing, BillingCalendar $calendar, ReportingService $reporting)
+    public function dashboard(CurrentContext $context, BillingCalendar $calendar)
     {
         $tenant = $context->tenant();
         $contract = Contract::query()->with('unit.property')->where('tenant_id', $tenant->id)->whereIn('status', ['active', 'move_out_requested', 'pending'])->latest('start_date')->first();
-        $invoices = Invoice::query()->withBalance()->where('tenant_id', $tenant->id)->latest('due_on')->limit(8)->get();
+        $invoices = Invoice::query()->withBalance()->where('tenant_id', $tenant->id)->get();
         $today = CarbonImmutable::now($context->organization()->timezone)->startOfDay();
         $open = $invoices->filter(fn ($invoice) => ! in_array($invoice->status->value, ['paid', 'cancelled'], true));
         $primary = $contract?->currency ?? $context->organization()->preference('default_currency');
         $due = (int) $open->where('currency', $primary)->sum(fn ($invoice) => $invoice->balanceMinor());
         $paid = (int) $invoices->where('currency', $primary)->sum(fn ($invoice) => $invoice->netPaidMinor());
         $next = $open->sortBy('due_on')->first();
-        $monthKey = $today->format('Y-m');
-        $charges = [];
-        foreach ([InvoiceType::Rent, InvoiceType::Water, InvoiceType::Electricity] as $type) {
-            $rows = $invoices->filter(fn ($invoice) => $invoice->type === $type && $invoice->period_key === $monthKey);
-            if ($rows->isEmpty() && $type !== InvoiceType::Rent) {
-                continue;
-            }
-            $charges[] = [
-                'label' => $type->label(),
-                'currency' => $rows->first()->currency ?? $primary,
-                'paid' => (int) $rows->sum(fn ($invoice) => $invoice->netPaidMinor()),
-                'due' => (int) $rows->sum(fn ($invoice) => $invoice->balanceMinor()),
-                'status' => $rows->first()?->status,
-            ];
-        }
 
         $owner = OrganizationMember::withoutGlobalScopes()
             ->with('user')
             ->where('organization_id', $context->organization()->id)
             ->where('role', 'owner')
             ->first();
-        $snapshot = $reporting->tenantSnapshot($context->organization(), $tenant->id, $primary);
-        $payments = Payment::query()->with('invoice')->where('tenant_id', $tenant->id)->latest('id')->limit(8)->get();
+        $latestRequest = MaintenanceRequest::query()
+            ->where('tenant_id', $tenant->id)
+            ->latest('updated_at')
+            ->first();
+        $payments = Payment::query()->where('tenant_id', $tenant->id)->latest('id')->get();
 
         return view('portal.dashboard', [
             'tenant' => $tenant,
             'contract' => $contract,
             'owner' => $owner,
-            'invoices' => $invoices,
-            'charges' => $charges,
             'due' => $due,
             'paid' => $paid,
             'next' => $next,
@@ -82,8 +67,11 @@ class PortalController extends Controller
                 ? $calendar->daysLate($today, CarbonImmutable::parse($next->due_on))
                 : 0,
             'currency' => $primary,
-            'snapshot' => $snapshot,
-            'payments' => $payments,
+            'latestRequest' => $latestRequest,
+            'payments' => $payments->take(3),
+            'awaiting' => (int) $payments->where('status', PaymentStatus::Pending)->sum('amount_minor'),
+            'approved' => (int) $payments->where('status', PaymentStatus::Approved)->sum('amount_minor'),
+            'asOf' => CarbonImmutable::now($context->organization()->timezone),
         ]);
     }
 
