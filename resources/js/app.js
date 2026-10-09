@@ -109,4 +109,33 @@ document.addEventListener('DOMContentLoaded', () => {
     if (import.meta.env.PROD && 'serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
+
+    const syncNavFade = () => {
+        document.querySelectorAll('.app-nav-scroll').forEach((scroller) => {
+            const frame = scroller.closest('.app-nav-frame');
+
+            if (!frame) {
+                return;
+            }
+
+            const box = scroller.getBoundingClientRect();
+            const partial = [...scroller.querySelectorAll('.app-nav-link, .app-nav-label')].find((item) => {
+                const rect = item.getBoundingClientRect();
+
+                return rect.top < box.bottom - 1 && rect.bottom > box.bottom + 1;
+            });
+            const cover = partial ? Math.ceil(box.bottom - partial.getBoundingClientRect().top) : 0;
+            const overflow = scroller.scrollHeight > scroller.clientHeight + 2;
+            const atEnd = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 4;
+
+            frame.style.setProperty('--nav-cover', `${cover}px`);
+            frame.classList.toggle('is-overflowing', overflow && !atEnd && cover > 1);
+        });
+    };
+
+    document.querySelectorAll('.app-nav-scroll').forEach((scroller) => {
+        scroller.addEventListener('scroll', syncNavFade, { passive: true });
+    });
+    window.addEventListener('resize', syncNavFade);
+    syncNavFade();
 });

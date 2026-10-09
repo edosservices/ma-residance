@@ -7,12 +7,17 @@
     }
 @endphp
 <div class="account-menu">
-    <p class="account-kicker">Mon profil</p>
-    <strong class="account-name">{{ $currentUser->name }}</strong>
-    <span class="account-role">{{ $eyebrow ?? 'Compte' }}</span>
-    @if ($currentUser->phone)
-        <span class="account-role">{{ $currentUser->phone }}</span>
-    @endif
+    <div class="account-identity">
+        <span class="account-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($currentUser->name, 0, 1)) }}</span>
+        <div class="account-identity-copy">
+            <p class="account-kicker">Mon profil</p>
+            <strong class="account-name">{{ $currentUser->name }}</strong>
+            <span class="account-role">{{ $eyebrow ?? 'Compte' }}</span>
+            @if ($currentUser->phone)
+                <span class="account-role">{{ $currentUser->phone }}</span>
+            @endif
+        </div>
+    </div>
     @if ($accountSettings)
         <a class="account-link" href="{{ $accountSettings }}"><i class="bi bi-gear" aria-hidden="true"></i> Paramètres</a>
     @endif

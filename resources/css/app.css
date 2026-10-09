@@ -80,16 +80,18 @@ a {
 }
 
 .app-sidebar {
-    width: 272px;
-    flex: 0 0 272px;
+    width: 276px;
+    flex: 0 0 276px;
     position: sticky;
     top: 0;
     height: 100vh;
-    overflow: auto;
+    height: 100dvh;
+    overflow: hidden;
     background: var(--mr-sidebar);
     color: var(--mr-sidebar-ink);
     border-right: 1px solid var(--mr-line);
-    padding: 1.1rem 0.85rem 1.5rem;
+    padding: 0.8rem 0.65rem 0.65rem;
+    gap: 0.2rem;
 }
 
 .app-main {
@@ -227,26 +229,37 @@ a {
 }
 
 .app-nav-label {
-    margin: 1rem 0.55rem 0.35rem;
+    margin: 0.55rem 0.6rem 0.08rem;
     color: var(--mr-muted);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 750;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.07em;
+    line-height: 1.2;
     text-transform: uppercase;
+}
+
+.app-nav > .app-nav-label:first-child {
+    margin-top: 0.2rem;
 }
 
 .app-nav-link {
     display: flex;
     align-items: center;
-    gap: 0.7rem;
-    min-height: 44px;
-    margin: 0.12rem 0;
-    padding: 0.45rem 0.7rem;
-    border-radius: 12px;
+    gap: 0.65rem;
+    min-height: 34px;
+    margin: 1px 0;
+    padding: 0.28rem 0.65rem;
+    border-radius: 10px;
     color: var(--mr-ink);
     text-decoration: none;
     font-weight: 650;
-    font-size: 0.94rem;
+    font-size: 0.92rem;
+    line-height: 1.2;
+}
+
+.app-nav-link span {
+    min-width: 0;
+    white-space: nowrap;
 }
 
 .app-nav-link i {
@@ -1423,11 +1436,13 @@ body.theme-collector .app-sidebar {
 body.theme-landlord .app-sidebar .brand,
 body.theme-landlord .app-sidebar .brand:hover,
 body.theme-landlord .app-sidebar .app-nav-link,
+body.theme-landlord .app-sidebar .app-nav-link i,
 body.theme-landlord .app-sidebar .account-name,
 body.theme-landlord .app-sidebar .account-link,
 body.theme-collector .app-sidebar .brand,
 body.theme-collector .app-sidebar .brand:hover,
 body.theme-collector .app-sidebar .app-nav-link,
+body.theme-collector .app-sidebar .app-nav-link i,
 body.theme-collector .app-sidebar .account-name,
 body.theme-collector .app-sidebar .account-link {
     color: var(--mr-sidebar-ink);
@@ -1467,9 +1482,22 @@ body.theme-collector .app-sidebar .app-nav-link.is-active i {
     color: var(--mr-accent);
 }
 
+body.theme-landlord .app-sidebar .sidebar-brand,
+body.theme-collector .app-sidebar .sidebar-brand,
+body.theme-admin .app-sidebar .sidebar-brand {
+    border-bottom-color: rgba(255, 255, 255, 0.18);
+}
+
 body.theme-landlord .app-sidebar .account-menu,
 body.theme-collector .app-sidebar .account-menu {
-    border-top-color: rgba(255, 255, 255, 0.28);
+    background: rgba(0, 0, 0, 0.14);
+    border-top: 0;
+}
+
+body.theme-landlord .app-sidebar .account-avatar,
+body.theme-collector .app-sidebar .account-avatar {
+    background: #fff;
+    color: var(--mr-accent-dark);
 }
 
 body.theme-landlord .app-sidebar .btn-ghost,
@@ -1620,21 +1648,172 @@ body.theme-admin .offcanvas :focus-visible {
     color: #0f6b43;
 }
 
+.app-sidebar .sidebar-brand {
+    flex: 0 0 auto;
+    margin: 0.1rem 0.35rem 0.15rem;
+    padding-bottom: 0.7rem;
+    border-bottom: 1px solid var(--mr-line);
+}
+
+.app-nav-frame {
+    position: relative;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.app-nav-frame::after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    right: 10px;
+    bottom: 0;
+    left: 0;
+    height: var(--nav-cover, 0px);
+    pointer-events: none;
+    opacity: 0;
+    background: var(--mr-sidebar);
+}
+
+.app-nav-frame.is-overflowing::after {
+    opacity: 1;
+}
+
+.app-nav-more {
+    position: absolute;
+    z-index: 2;
+    right: 12px;
+    bottom: 0;
+    left: 0;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    height: 18px;
+    color: var(--mr-sidebar-ink);
+    font-size: 0.75rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.app-nav-frame.is-overflowing .app-nav-more {
+    display: flex;
+}
+
 .app-nav-scroll {
     flex: 1 1 auto;
     min-height: 0;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    overscroll-behavior: contain;
+    padding: 0.15rem 0.2rem 0.85rem 0.15rem;
+}
+
+.app-nav-scroll::-webkit-scrollbar {
+    width: 10px;
+}
+
+.app-nav-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.app-nav-scroll::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background: rgba(22, 32, 46, 0.35);
+    background-clip: padding-box;
+}
+
+body.theme-landlord .app-nav-scroll,
+body.theme-collector .app-nav-scroll,
+body.theme-admin .app-nav-scroll {
+    scrollbar-color: rgba(255, 255, 255, 0.55) transparent;
+}
+
+body.theme-landlord .app-nav-scroll::-webkit-scrollbar-thumb,
+body.theme-collector .app-nav-scroll::-webkit-scrollbar-thumb,
+body.theme-admin .app-nav-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4);
+    background-clip: padding-box;
 }
 
 .app-sidebar .account-menu {
-    margin-top: 1rem;
-    padding-top: 0.85rem;
+    flex: 0 0 auto;
+    margin: 0.15rem 0.15rem 0;
+    padding: 0.5rem 0.55rem 0.5rem;
     border-top: 1px solid var(--mr-line);
+    border-radius: 12px;
+    gap: 0.15rem;
 }
 
 .account-menu {
     display: grid;
     gap: 0.35rem;
+}
+
+.account-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.account-identity-copy {
+    display: grid;
+    min-width: 0;
+    gap: 0.02rem;
+}
+
+.app-sidebar .account-kicker {
+    font-size: 0.64rem;
+    letter-spacing: 0.06em;
+}
+
+.app-sidebar .account-name,
+.app-sidebar .account-role {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-sidebar .account-name {
+    font-size: 0.92rem;
+    line-height: 1.2;
+}
+
+.app-sidebar .account-role {
+    font-size: 0.72rem;
+    line-height: 1.25;
+}
+
+.app-sidebar .account-link {
+    min-height: 32px;
+    padding: 0.1rem 0.2rem;
+    border-radius: 8px;
+    font-size: 0.86rem;
+}
+
+.app-sidebar .account-link:hover {
+    background: rgba(15, 107, 67, 0.08);
+}
+
+body.theme-landlord .app-sidebar .account-link:hover,
+body.theme-collector .app-sidebar .account-link:hover,
+body.theme-admin .app-sidebar .account-link:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.app-sidebar .account-menu .btn {
+    min-height: 34px;
+    margin-top: 0.1rem;
+    padding: 0.28rem 0.7rem;
+    font-size: 0.86rem;
+}
+
+.app-sidebar .account-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 0.92rem;
 }
 
 .account-kicker,
