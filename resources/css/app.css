@@ -16,10 +16,10 @@
     --mr-mauve: #69468f;
     --mr-mauve-dark: #51356f;
     --mr-mauve-soft: #f4eef8;
-    --mr-ink: #1a211c;
-    --mr-muted: #5c665f;
-    --mr-line: #e3e0d8;
-    --mr-paper: #f6f4f0;
+    --mr-ink: #1c1915;
+    --mr-muted: #5e5852;
+    --mr-line: #e7e1d8;
+    --mr-paper: #f6f1ea;
     --mr-warn: #9a5b00;
     --mr-warn-soft: #fff4e4;
     --mr-bad: #a3261d;
@@ -39,7 +39,7 @@
     --bs-border-radius-lg: 0.5rem;
     --bs-border-radius-xl: 0.5rem;
     --bs-border-radius-xxl: 0.5rem;
-    --bs-font-sans-serif: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --bs-font-sans-serif: 'Manrope', ui-sans-serif, system-ui, sans-serif;
     --bs-body-font-family: var(--bs-font-sans-serif);
     --bs-body-font-weight: 400;
     --bs-body-line-height: 1.6;
@@ -52,7 +52,7 @@ html {
 body {
     color: var(--mr-ink);
     background: var(--mr-paper);
-    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
     font-weight: 400;
     line-height: 1.6;
     letter-spacing: -0.011em;

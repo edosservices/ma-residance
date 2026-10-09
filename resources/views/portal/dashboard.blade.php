@@ -11,9 +11,13 @@
         <div class="row g-3 mb-3">
             <div class="col-12 col-lg-7">
                 <article class="card balance-card h-100">
-                    <p class="kicker">Mon solde</p>
+                    <p class="kicker">Votre situation</p>
                     <p class="balance-value tabular">{{ money($due, $currency) }}</p>
+                    <p class="mb-1">{{ $daysLate > 0 ? 'Vous avez un retard sur votre loyer.' : 'Vous êtes à jour.' }}</p>
                     <p class="text-muted mb-2">Reste à payer · déjà réglé {{ money($paid, $currency) }}</p>
+                    @if ($next)
+                        <p class="text-muted mb-2">Prochaine échéance {{ $next->due_on->format('d/m/Y') }}</p>
+                    @endif
                     <p class="mb-3">
                         <x-badge :tone="$daysLate > 0 ? 'bad' : 'good'">{{ $daysLate > 0 ? $daysLate.' jour'.($daysLate > 1 ? 's' : '').' de retard' : 'À jour' }}</x-badge>
                     </p>

@@ -1,6 +1,6 @@
 @extends('layouts.shell')
 @section('content')
-    <x-page-header title="Tableau de bord" subtitle="{{ $period_label }}{{ $property_id ? ' · résidence filtrée' : '' }}">
+    <x-page-header title="Tableau de bord" subtitle="Logements, locataires et loyers · {{ $period_label }}{{ $property_id ? ' · résidence filtrée' : '' }}">
         <x-slot:actions>
             @if (allows('units.manage') || allows('properties.manage'))
                 <a class="btn btn-primary" href="{{ route('office.properties.index') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Ajouter un logement</a>
@@ -24,6 +24,17 @@
         <input type="hidden" name="periode" value="{{ $period }}">
     </form>
     @include('partials.period', ['period' => $period])
+
+    <article class="card mb-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="text-start">
+            <p class="kicker mb-1">Situation des locataires</p>
+            <strong>{{ $stock['tenants'] }} locataire{{ $stock['tenants'] > 1 ? 's' : '' }} · {{ $late_count }} en retard</strong>
+            <p class="mb-0 text-muted">Qui occupe un logement, et qui doit encore régler.</p>
+        </div>
+        @if (allows('tenants.view'))
+            <a class="btn btn-ghost" href="{{ route('office.tenants.index') }}">Gérer les locataires</a>
+        @endif
+    </article>
 
     @php
         $spotlightCurrency = array_key_first($currencies) ?: $chart_currency;
