@@ -11,9 +11,13 @@
         <div class="row g-3 mb-3">
             <div class="col-12 col-lg-7">
                 <article class="card balance-card h-100">
-                    <p class="kicker">Mon solde</p>
+                    <p class="kicker">Votre situation</p>
                     <p class="balance-value tabular">{{ money($due, $currency) }}</p>
+                    <p class="mb-1">{{ $daysLate > 0 ? 'Vous avez un retard sur votre loyer.' : 'Vous êtes à jour.' }}</p>
                     <p class="text-muted mb-2">Reste à payer · déjà réglé {{ money($paid, $currency) }}</p>
+                    @if ($next)
+                        <p class="text-muted mb-2">Prochaine échéance {{ $next->due_on->format('d/m/Y') }}</p>
+                    @endif
                     <p class="mb-3">
                         <x-badge :tone="$daysLate > 0 ? 'bad' : 'good'">{{ $daysLate > 0 ? $daysLate.' jour'.($daysLate > 1 ? 's' : '').' de retard' : 'À jour' }}</x-badge>
                     </p>
@@ -29,6 +33,21 @@
                         <a class="btn btn-primary" href="{{ route('portal.maintenance.index') }}">Faire une demande</a>
                         <a class="btn btn-ghost" href="{{ route('portal.messages.index') }}">Messages</a>
                     </div>
+                </article>
+            </div>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-lg-8">
+                <img class="portal-photo" src="{{ asset('images/brand/residence-facade.jpg') }}" alt="{{ $contract->unit->property->name ?? 'Résidence' }}">
+            </div>
+            <div class="col-12 col-lg-4">
+                <article class="card h-100">
+                    <p class="kicker">Mes contacts utiles</p>
+                    <strong class="d-block">{{ $owner?->user?->name ?? $currentOrganization->name }}</strong>
+                    <p class="text-muted mb-2">Bailleur</p>
+                    @if ($owner?->user?->phone || $currentOrganization->phone)
+                        <a class="fw-semibold" href="tel:{{ preg_replace('/\s+/', '', $owner?->user?->phone ?? $currentOrganization->phone) }}">{{ $owner?->user?->phone ?? $currentOrganization->phone }}</a>
+                    @endif
                 </article>
             </div>
         </div>

@@ -16,10 +16,10 @@
     --mr-mauve: #69468f;
     --mr-mauve-dark: #51356f;
     --mr-mauve-soft: #f4eef8;
-    --mr-ink: #1a211c;
-    --mr-muted: #5c665f;
-    --mr-line: #e3e0d8;
-    --mr-paper: #f6f4f0;
+    --mr-ink: #1c1915;
+    --mr-muted: #5e5852;
+    --mr-line: #e7e1d8;
+    --mr-paper: #f6f1ea;
     --mr-warn: #9a5b00;
     --mr-warn-soft: #fff4e4;
     --mr-bad: #a3261d;
@@ -39,7 +39,7 @@
     --bs-border-radius-lg: 0.5rem;
     --bs-border-radius-xl: 0.5rem;
     --bs-border-radius-xxl: 0.5rem;
-    --bs-font-sans-serif: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    --bs-font-sans-serif: 'Manrope', ui-sans-serif, system-ui, sans-serif;
     --bs-body-font-family: var(--bs-font-sans-serif);
     --bs-body-font-weight: 400;
     --bs-body-line-height: 1.6;
@@ -52,7 +52,7 @@ html {
 body {
     color: var(--mr-ink);
     background: var(--mr-paper);
-    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Manrope', ui-sans-serif, system-ui, sans-serif;
     font-weight: 400;
     line-height: 1.6;
     letter-spacing: -0.011em;
@@ -729,6 +729,20 @@ textarea.field { min-height: 96px; }
     background: rgba(255, 255, 255, 0.94);
     border-bottom: 1px solid var(--mr-line);
     backdrop-filter: blur(12px);
+}
+
+@media (max-width: 991.98px) {
+    .marketing-nav .container {
+        min-width: 0;
+    }
+
+    .marketing-nav .brand {
+        min-width: 0;
+    }
+
+    .marketing-nav .brand-name small {
+        display: none;
+    }
 }
 
 .hero {
@@ -1684,6 +1698,64 @@ body.theme-admin .offcanvas :focus-visible {
 
 .bar-in.is-current {
     background: var(--mr-accent-dark);
+}
+
+.logout-inline-form {
+    margin: 0;
+}
+
+.logout-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 40px;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--mr-line);
+    border-radius: 999px;
+    background: #fff;
+    color: var(--mr-ink);
+    font-size: 0.82rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+.logout-inline:hover {
+    background: var(--mr-accent-soft, var(--mr-paper));
+    color: var(--mr-accent-ink, var(--mr-ink));
+}
+
+.spotlight-card {
+    background: linear-gradient(160deg, #14915c, #0b5535);
+    color: #fff;
+    border-color: transparent;
+}
+
+.spotlight-card .kicker {
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.spotlight-value {
+    margin: 0.15rem 0 0.35rem;
+    font-size: clamp(1.8rem, 3vw, 2.4rem);
+    font-weight: 650;
+    letter-spacing: -0.04em;
+    line-height: 1;
+}
+
+.portal-photo {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 16px;
+}
+
+.thread-row.is-active {
+    background: var(--mr-accent-soft);
+    border-radius: 12px;
+}
+
+.inbox-chat .chat-log {
+    min-height: 280px;
 }
 
 @media (min-width: 992px) {

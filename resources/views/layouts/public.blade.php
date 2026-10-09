@@ -14,7 +14,13 @@
     <header class="marketing-nav">
         <div class="container py-2 d-flex align-items-center gap-2">
             <x-logo href="{{ route('home') }}" />
-            <button class="icon-btn d-lg-none ms-auto" type="button" data-bs-toggle="offcanvas" data-bs-target="#publicNav" aria-label="Ouvrir le menu">
+            @auth
+                <form method="POST" action="{{ route('logout') }}" class="logout-inline-form d-lg-none ms-auto">
+                    @csrf
+                    <button class="logout-inline" type="submit">Se déconnecter</button>
+                </form>
+            @endauth
+            <button class="icon-btn d-lg-none {{ auth()->check() ? '' : 'ms-auto' }}" type="button" data-bs-toggle="offcanvas" data-bs-target="#publicNav" aria-label="Ouvrir le menu">
                 <i class="bi bi-list" aria-hidden="true"></i>
             </button>
             <nav class="d-none d-lg-flex align-items-center gap-3 ms-auto" aria-label="Public">
@@ -22,7 +28,11 @@
                 <a class="fw-semibold text-decoration-none text-ink" href="{{ route('home') }}#fonctionnalites">Fonctionnalités</a>
                 <a class="fw-semibold text-decoration-none text-ink" href="{{ route('catalog.index') }}">Logements</a>
                 @auth
-                    <a class="btn btn-primary" href="{{ route('home') }}">Mon espace</a>
+                    <a class="btn btn-primary" href="{{ route('account.home') }}">Mon espace</a>
+                    <form method="POST" action="{{ route('logout') }}" class="logout-inline-form">
+                        @csrf
+                        <button class="logout-inline" type="submit">Se déconnecter</button>
+                    </form>
                 @else
                     <a class="fw-semibold text-decoration-none text-ink" href="{{ route('login') }}">Connexion</a>
                     <a class="btn btn-primary" href="{{ route('register.landlord') }}">Commencer maintenant</a>
@@ -41,9 +51,17 @@
             <a class="btn btn-ghost" href="{{ route('home') }}#biens">Biens et unités</a>
             <a class="btn btn-ghost" href="{{ route('home') }}#loyers">Loyers et paiements</a>
             <a class="btn btn-ghost" href="{{ route('catalog.index') }}">Logements libres</a>
-            <a class="btn btn-ghost" href="{{ route('login') }}">Connexion</a>
-            <a class="btn btn-primary" href="{{ route('register.landlord') }}">Commencer maintenant</a>
-            <a class="btn btn-ghost" href="{{ route('register.tenant') }}">Je suis locataire</a>
+            @auth
+                <a class="btn btn-primary" href="{{ route('account.home') }}">Mon espace</a>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="btn btn-ghost" type="submit">Se déconnecter</button>
+                </form>
+            @else
+                <a class="btn btn-ghost" href="{{ route('login') }}">Connexion</a>
+                <a class="btn btn-primary" href="{{ route('register.landlord') }}">Commencer maintenant</a>
+                <a class="btn btn-ghost" href="{{ route('register.tenant') }}">Je suis locataire</a>
+            @endauth
         </div>
     </div>
     <main class="public-main">

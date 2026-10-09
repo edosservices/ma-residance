@@ -1,6 +1,6 @@
 @extends('layouts.shell')
 @section('content')
-    <x-page-header title="Tableau de bord" subtitle="{{ $period_label }}{{ $property_id ? ' · résidence filtrée' : '' }}">
+    <x-page-header title="Tableau de bord" subtitle="Logements, locataires et loyers · {{ $period_label }}{{ $property_id ? ' · résidence filtrée' : '' }}">
         <x-slot:actions>
             @if (allows('units.manage') || allows('properties.manage'))
                 <a class="btn btn-primary" href="{{ route('office.properties.index') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Ajouter un logement</a>
@@ -25,13 +25,41 @@
     </form>
     @include('partials.period', ['period' => $period])
 
+    <article class="card mb-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="text-start">
+            <p class="kicker mb-1">Situation des locataires</p>
+            <strong>{{ $stock['tenants'] }} locataire{{ $stock['tenants'] > 1 ? 's' : '' }} · {{ $late_count }} en retard</strong>
+            <p class="mb-0 text-muted">Qui occupe un logement, et qui doit encore régler.</p>
+        </div>
+        @if (allows('tenants.view'))
+            <a class="btn btn-ghost" href="{{ route('office.tenants.index') }}">Gérer les locataires</a>
+        @endif
+    </article>
+
+    @php
+        $spotlightCurrency = array_key_first($currencies) ?: $chart_currency;
+        $spotlightCollected = $currencies[$spotlightCurrency]['collected'] ?? 0;
+    @endphp
     <div class="row g-3 mb-3">
-        <div class="col-6 col-md-4 col-xl-2"><x-stat label="Logements" :value="$stock['units']" icon="door-open" tone="mauve" :href="allows('units.manage') ? route('office.units.index') : null" /></div>
-        <div class="col-6 col-md-4 col-xl-2"><x-stat label="Occupés" :value="$stock['occupied']" :hint="$stock['occupancy_rate'].' % occupés'" icon="person-check" tone="info" /></div>
-        <div class="col-6 col-md-4 col-xl-2"><x-stat label="Disponibles" :value="$stock['free']" icon="house" tone="green" /></div>
-        <div class="col-6 col-md-4 col-xl-2"><x-stat label="Locataires" :value="$stock['tenants']" icon="people" tone="mauve" :href="allows('tenants.view') ? route('office.tenants.index') : null" /></div>
-        <div class="col-6 col-md-4 col-xl-2"><x-stat label="Maintenance" :value="$open_maintenance" hint="Interventions ouvertes" icon="tools" tone="warn" :href="allows('maintenance.manage') ? route('office.maintenance.index') : null" /></div>
-        <div class="col-6 col-md-4 col-xl-2"><x-stat label="Résidences" :value="$stock['properties']" icon="buildings" /></div>
+        <div class="col-12 col-md-6 col-xl-3">
+            <article class="card spotlight-card h-100">
+                <p class="kicker">Taux d'occupation</p>
+                <p class="spotlight-value tabular">{{ $stock['occupancy_rate'] }}%</p>
+                <p class="mb-0">{{ $stock['occupied'] }} occupés · {{ $stock['free'] }} disponibles</p>
+            </article>
+        </div>
+        <div class="col-6 col-xl-3"><x-stat label="Résidences" :value="$stock['properties']" hint="Biens enregistrés" icon="buildings" /></div>
+        <div class="col-6 col-xl-3"><x-stat label="Loyers encaissés" :value="money($spotlightCollected, $spotlightCurrency)" hint="Paiements validés" icon="cash-coin" tone="green" /></div>
+        <div class="col-12 col-md-6 col-xl-3"><x-stat label="Maintenance" :value="$open_maintenance" hint="Interventions ouvertes" icon="tools" tone="warn" :href="allows('maintenance.manage') ? route('office.maintenance.index') : null" /></div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-md-4"><x-stat label="Logements" :value="$stock['units']" icon="door-open" tone="mauve" :href="allows('units.manage') ? route('office.units.index') : null" /></div>
+        <div class="col-6 col-md-4"><x-stat label="Occupés" :value="$stock['occupied']" :hint="$stock['occupancy_rate'].' % occupés'" icon="person-check" tone="info" /></div>
+        <div class="col-6 col-md-4"><x-stat label="Disponibles" :value="$stock['free']" icon="house" tone="green" /></div>
+        <div class="col-6 col-md-4"><x-stat label="Locataires" :value="$stock['tenants']" icon="people" tone="mauve" :href="allows('tenants.view') ? route('office.tenants.index') : null" /></div>
+        <div class="col-6 col-md-4"><x-stat label="Maintenance" :value="$open_maintenance" hint="Interventions ouvertes" icon="tools" tone="warn" :href="allows('maintenance.manage') ? route('office.maintenance.index') : null" /></div>
+        <div class="col-6 col-md-4"><x-stat label="Résidences" :value="$stock['properties']" icon="buildings" /></div>
     </div>
 
     @php
