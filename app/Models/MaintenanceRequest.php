@@ -19,6 +19,7 @@ class MaintenanceRequest extends Model
         'organization_id', 'unit_id', 'tenant_id', 'reported_by', 'assigned_to',
         'title', 'description', 'urgency', 'status', 'photo_path',
         'estimated_cost_minor', 'currency', 'quote_note',
+        'handled_at', 'handled_by', 'handled_note',
     ];
 
     protected function casts(): array
@@ -27,6 +28,7 @@ class MaintenanceRequest extends Model
             'status' => MaintenanceStatus::class,
             'urgency' => MaintenanceUrgency::class,
             'estimated_cost_minor' => 'integer',
+            'handled_at' => 'datetime',
         ];
     }
 
@@ -48,6 +50,11 @@ class MaintenanceRequest extends Model
     public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function handler(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'handled_by');
     }
 
     public function updates(): HasMany

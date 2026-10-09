@@ -548,6 +548,57 @@ select.field {
     line-height: 1.35;
 }
 
+.client-picker { display: grid; gap: 0.75rem; }
+
+.client-picker-block {
+    border: 1px solid var(--mr-line);
+    border-radius: 16px;
+    background: #fff;
+    padding: 0.9rem 1rem;
+}
+
+.client-choice {
+    display: flex;
+    gap: 0.7rem;
+    align-items: flex-start;
+    margin-top: 0.45rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--mr-line);
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.client-choice input { margin-top: 0.2rem; }
+
+.client-choice:has(input:checked) {
+    border-color: var(--mr-green);
+    background: var(--mr-green-soft);
+}
+
+.urgent-modal .modal-header {
+    background: var(--mr-bad-soft);
+    color: var(--mr-bad);
+}
+
+.file-example {
+    position: relative;
+    display: flex;
+    align-items: center;
+    color: var(--mr-muted);
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.file-example input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.file-example.is-filled { color: var(--mr-ink); }
+
 .field:focus {
     border-color: var(--mr-accent, var(--mr-green));
     outline: none;

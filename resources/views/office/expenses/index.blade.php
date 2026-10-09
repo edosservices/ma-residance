@@ -40,6 +40,9 @@
                 </div>
                 <p class="text-sm text-muted">{{ $expense->category->name }} · {{ $expense->spent_on->format('d/m/Y') }} · {{ $expense->unit?->reference ?? $expense->property?->name ?? 'Organisation' }}</p>
                 <p class="mt-1">{{ money($expense->amount_minor, $expense->currency) }}</p>
+                @if (sees_trace())
+                    <p class="small text-muted mb-0">Enregistrée le {{ $expense->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }} par {{ $expense->recorder?->name ?? 'Inconnu' }}@if ($expense->tenant) · {{ $expense->tenant->name }}@endif</p>
+                @endif
                 @if (allows('expenses.manage') && $expense->status->value === 'recorded')
                     <form method="POST" action="{{ route('office.expenses.void', $expense) }}" class="mt-2 flex gap-2">
                         @csrf

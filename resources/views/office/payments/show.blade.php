@@ -10,7 +10,11 @@
     @if ($payment->note)
         <p class="card mt-3 text-sm">{{ $payment->note }}</p>
     @endif
-    @include('partials.payment-trace', ['payment' => $payment])
+    @if (sees_trace())
+        @include('partials.payment-trace', ['payment' => $payment])
+    @else
+        <p class="text-muted mt-3">Le détail de cette déclaration reste chez le bailleur.</p>
+    @endif
     @if ($payment->status->value === 'pending' && allows('payments.validate'))
         <form method="POST" action="{{ route('office.payments.approve', $payment) }}" class="mt-4">
             @csrf

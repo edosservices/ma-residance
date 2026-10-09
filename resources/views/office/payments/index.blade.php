@@ -16,7 +16,9 @@
                 </div>
                 <p class="text-sm text-muted">{{ $payment->tenant->name }} · {{ $payment->method->label() }} · {{ $payment->kind->label() }}@if ($payment->proof_path) · preuve jointe @endif</p>
                 <p class="mt-1 mb-0">{{ money($payment->amount_minor, $payment->currency) }}</p>
-                <p class="small text-muted mb-0">{{ $payment->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }} · {{ $payment->declarer?->name }}</p>
+                @if (sees_trace())
+                    <p class="small text-muted mb-0">Déclaré le {{ $payment->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }} par {{ $payment->declarer?->name ?? 'Inconnu' }}</p>
+                @endif
             </a>
         @endforeach
     </div>

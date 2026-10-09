@@ -195,7 +195,7 @@ class PortalController extends Controller
     public function showMaintenance(MaintenanceRequest $maintenance)
     {
         $this->authorize('view', $maintenance);
-        $maintenance->load('updates.user', 'unit');
+        $maintenance->load('updates.user', 'unit', 'tenant', 'reporter', 'handler');
 
         return view('portal.maintenance.show', ['item' => $maintenance]);
     }

@@ -29,6 +29,7 @@ final class RoleMatrix
                 Permission::CollectionsRecord->value,
                 Permission::CollectionsRemit->value,
                 Permission::MessagesUse->value,
+                Permission::TracesShare->value,
             ],
             MemberRole::Accountant => [
                 Permission::InvoicesView->value,
@@ -41,12 +42,50 @@ final class RoleMatrix
                 Permission::ReportsFinancial->value,
                 Permission::RemittancesConfirm->value,
                 Permission::MessagesUse->value,
+                Permission::TracesShare->value,
             ],
             MemberRole::Technician => [
                 Permission::MaintenanceManage->value,
                 Permission::MessagesUse->value,
+                Permission::TracesShare->value,
             ],
         };
+    }
+
+    /**
+     * @return list<MemberRole>
+     */
+    public static function creatable(MemberRole $actor): array
+    {
+        return match ($actor) {
+            MemberRole::Owner => [MemberRole::Manager, MemberRole::Collector, MemberRole::Accountant, MemberRole::Technician],
+            MemberRole::Manager => [MemberRole::Collector],
+            default => [],
+        };
+    }
+
+    /**
+     * Droits que cet acteur peut cocher pour ce rôle.
+     *
+     * @return list<string>
+     */
+    public static function grantable(MemberRole $actor, MemberRole $target): array
+    {
+        if ($actor === MemberRole::Owner) {
+            return self::cap($target);
+        }
+
+        if ($actor === MemberRole::Manager && $target === MemberRole::Collector) {
+            return [
+                Permission::TenantsView->value,
+                Permission::InvoicesView->value,
+                Permission::PaymentsView->value,
+                Permission::CollectionsRecord->value,
+                Permission::MessagesUse->value,
+            ];
+        }
+
+        return [];
     }
 
     /**
@@ -54,7 +93,13 @@ final class RoleMatrix
      */
     public static function defaults(MemberRole $role): array
     {
-        return self::cap($role);
+        $cap = self::cap($role);
+
+        if (in_array($role, [MemberRole::Collector, MemberRole::Accountant, MemberRole::Technician], true)) {
+            return array_values(array_diff($cap, [Permission::TracesShare->value]));
+        }
+
+        return $cap;
     }
 
     /**

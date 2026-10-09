@@ -12,19 +12,17 @@
         <p class="mt-2 text-sm">{{ $invoice->notes }}</p>
     @endif
     @if (allows('payments.validate') && ! in_array($invoice->status->value, ['paid', 'cancelled'], true))
-        <form method="POST" action="{{ route('office.payments.store') }}" enctype="multipart/form-data" class="card mt-4 space-y-2">
+        <form method="POST" action="{{ route('office.payments.store') }}" enctype="multipart/form-data" class="card mt-4">
             @csrf
             <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
             <p class="font-semibold">Déclarer un paiement</p>
-            <input class="field" name="amount" value="{{ number_format($balance / 100, 2, '.', '') }}">
-            <select class="field" name="method">
-                <option value="cash">Espèces</option>
-                <option value="transfer">Transfert</option>
-                <option value="other">Autre</option>
-            </select>
-            <input class="field" name="note" placeholder="Note">
-            <input class="field" type="file" name="proof">
-            <button class="btn btn-primary w-full">Enregistrer</button>
+            <p class="text-muted">Chez {{ $invoice->tenant->name }}@if ($invoice->tenant->phone) · {{ $invoice->tenant->phone }}@endif</p>
+            <x-payment-declare-fields
+                prefix="invoice"
+                :amount-placeholder="'Ex. '.number_format($balance / 100, 2, '.', '')"
+                :amount-hint="'Ex. '.number_format($balance / 100, 2, '.', '').'. Le solde restant est '.money($balance, $invoice->currency).'.'"
+            />
+            <button class="btn btn-primary w-100">Enregistrer</button>
         </form>
     @endif
     @if (allows('collections.record') && ! in_array($invoice->status->value, ['paid', 'cancelled'], true))
@@ -32,12 +30,20 @@
             @csrf
             <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
             <p class="font-semibold">Encaisser en espèces</p>
-            <select class="field" name="agent_id">
-                @foreach ($agents as $agent)
-                    <option value="{{ $agent->user_id }}" @selected($agent->user_id === auth()->id())>{{ $agent->user->name }}</option>
-                @endforeach
-            </select>
-            <input class="field" name="amount" value="{{ number_format($balance / 100, 2, '.', '') }}">
+            <div class="field-group mb-2">
+                <label for="cash-agent">Agent</label>
+                <select id="cash-agent" class="field" name="agent_id" required>
+                    <option value="" disabled @selected(old('agent_id') === null)>Ex. Sarah, agent de recouvrement</option>
+                    @foreach ($agents as $agent)
+                        <option value="{{ $agent->user_id }}" @selected((string) old('agent_id') === (string) $agent->user_id)>{{ $agent->user->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="field-group mb-2">
+                <label for="cash-office-amount">Montant reçu</label>
+                <input id="cash-office-amount" class="field" name="amount" inputmode="decimal" value="{{ old('amount') }}" placeholder="Ex. {{ number_format($balance / 100, 2, '.', '') }}" required>
+                <span class="field-hint">Ex. {{ number_format($balance / 100, 2, '.', '') }}. Le solde restant est {{ money($balance, $invoice->currency) }}.</span>
+            </div>
             <button class="btn btn-ghost w-full">Ouvrir l'encaissement</button>
         </form>
     @endif

@@ -11,6 +11,7 @@ use App\Services\ContractService;
 use App\Services\HousingService;
 use App\Services\MemberService;
 use App\Services\RegistrationService;
+use App\Services\TenantService;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -145,6 +146,46 @@ class PaymentTraceTest extends TestCase
             });
 
         $this->assertTrue(password_verify('ancien-mot', $known->fresh()->password));
+    }
+
+    public function test_the_office_payment_form_lists_every_client_with_examples(): void
+    {
+        [$owner, $jean, $invoice] = $this->lease();
+        $organization = Organization::query()->firstOrFail();
+        app(TenantService::class)->create($organization, $owner, [
+            'name' => 'Amina Kabila',
+            'phone' => '0820000009',
+        ]);
+
+        $this->actingAs($owner)->get(route('office.payments.create'))
+            ->assertOk()
+            ->assertSee('Clients')
+            ->assertSee('Jean')
+            ->assertSee($jean->phone)
+            ->assertSee('Amina Kabila')
+            ->assertSee('+243820000009')
+            ->assertSee('Aucune facture ouverte pour ce client.')
+            ->assertSee($invoice->number)
+            ->assertSee('Appartement A')
+            ->assertSee('Ex. Jean ou 0820000001')
+            ->assertSee('Ex. 150.00')
+            ->assertSee("Ex. Loyer d'octobre, reçu en espèces au bureau")
+            ->assertSee('Ex. photo du reçu ou capture du transfert.')
+            ->assertSee('Ex. Espèces');
+
+        $this->actingAs($owner)->get(route('office.invoices.show', $invoice))
+            ->assertOk()
+            ->assertSee('Déclarer un paiement')
+            ->assertSee('Ex. 70.00')
+            ->assertSee("Ex. Loyer d'octobre, reçu en espèces au bureau")
+            ->assertSee('Ex. photo du reçu ou capture du transfert');
+
+        $this->actingAs($jean)->get(route('portal.invoices.show', $invoice))
+            ->assertOk()
+            ->assertSee('Déclarer un paiement')
+            ->assertSee('Ex. 70.00')
+            ->assertSee('Ex. Transfert du 9 octobre, référence 123456', false)
+            ->assertSee('Ex. Espèces');
     }
 
     /**

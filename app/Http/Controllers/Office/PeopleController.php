@@ -61,13 +61,27 @@ class PeopleController extends Controller
         return view('office.tenants.show', compact('tenant'));
     }
 
-    public function members()
+    public function members(CurrentContext $context)
     {
-        $members = OrganizationMember::query()->with('user')->orderBy('role')->get();
+        $actor = $context->member();
+        $roles = RoleMatrix::creatable($actor->role);
+        $grantable = [];
+        $presets = [];
+
+        foreach ($roles as $role) {
+            $grant = RoleMatrix::grantable($actor->role, $role);
+            $grantable[$role->value] = $grant;
+            $presets[$role->value] = $actor->role === MemberRole::Manager
+                ? $grant
+                : array_values(array_intersect($grant, RoleMatrix::defaults($role)));
+        }
 
         return view('office.members.index', [
-            'members' => $members,
-            'roles' => [MemberRole::Manager, MemberRole::Collector, MemberRole::Accountant, MemberRole::Technician],
+            'members' => OrganizationMember::query()->with('user')->orderBy('role')->get(),
+            'actor' => $actor,
+            'roles' => $roles,
+            'grantable' => $grantable,
+            'presets' => $presets,
             'matrix' => collect(MemberRole::cases())->mapWithKeys(fn (MemberRole $role) => [$role->value => RoleMatrix::cap($role)]),
             'permissions' => Permission::cases(),
         ]);
@@ -75,12 +89,13 @@ class PeopleController extends Controller
 
     public function storeMember(Request $request, CurrentContext $context, MemberService $members)
     {
+        $allowed = array_map(fn (MemberRole $role) => $role->value, RoleMatrix::creatable($context->member()->role));
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
             'phone' => ['required', 'string', 'max:30'],
             'email' => ['nullable', 'email', 'max:160'],
             'password' => ['required', Password::min(8)],
-            'role' => ['required', Rule::in(['manager', 'collector', 'accountant', 'technician'])],
+            'role' => ['required', Rule::in($allowed)],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string'],
         ]);
@@ -111,7 +126,7 @@ class PeopleController extends Controller
             $members->suspend($member, $request->user(), $request->boolean('active'));
         }
 
-        if ($request->has('permissions')) {
+        if ($request->boolean('permissions_form')) {
             $members->updatePermissions($member, $request->user(), $data['permissions'] ?? []);
         }
 
@@ -137,7 +152,9 @@ class PeopleController extends Controller
             'reminder_days_before' => ['required', 'integer', 'min:1', 'max:15'],
             'reminder_repeat_days' => ['required', 'integer', 'min:1', 'max:30'],
             'default_currency' => ['required', Rule::in($context->organization()->currencies())],
+            'share_declaration_trace' => ['nullable', 'boolean'],
         ]);
+        $data['share_declaration_trace'] = $request->boolean('share_declaration_trace');
 
         $organization = $context->organization();
         $organization->settings = array_merge($organization->settings ?? [], $data);

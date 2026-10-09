@@ -29,6 +29,7 @@ enum Permission: string
     case NotificationsSend = 'notifications.send';
     case SettingsManage = 'settings.manage';
     case MoveOutManage = 'moveout.manage';
+    case TracesShare = 'traces.share';
 
     public function label(): string
     {
@@ -56,6 +57,7 @@ enum Permission: string
             self::NotificationsSend => 'Envoyer des notifications',
             self::SettingsManage => 'Paramètres de l\'organisation',
             self::MoveOutManage => 'Valider les départs',
+            self::TracesShare => 'Voir la traçabilité des déclarations',
         };
     }
 }

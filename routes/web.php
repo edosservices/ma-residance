@@ -113,6 +113,7 @@ Route::middleware(['auth', 'private'])->group(function () {
             Route::post('/maintenance', [OperationController::class, 'storeMaintenance'])->name('maintenance.store');
             Route::get('/maintenance/{maintenance}', [OperationController::class, 'showMaintenance'])->name('maintenance.show');
             Route::post('/maintenance/{maintenance}/avancer', [OperationController::class, 'advanceMaintenance'])->name('maintenance.advance');
+            Route::post('/maintenance/{maintenance}/accepter', [OperationController::class, 'acceptMaintenance'])->name('maintenance.accept');
         });
 
         Route::middleware('perm:moveout.manage|contracts.manage')->group(function () {

@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Enums\MaintenanceStatus;
+use App\Enums\MaintenanceUrgency;
+use App\Enums\MemberRole;
 use App\Models\CashCollection;
 use App\Models\CashRemittance;
 use App\Models\Contract;
@@ -53,10 +56,30 @@ class AppServiceProvider extends ServiceProvider
         View::composer(['layouts.shell', 'layouts.guest'], function ($view) {
             $user = auth()->user();
             $context = app(CurrentContext::class);
+            $member = $context->member();
+            $urgentMaintenance = collect();
+
+            if ($member && in_array($member->role, [MemberRole::Owner, MemberRole::Manager], true)) {
+                $urgentMaintenance = MaintenanceRequest::query()
+                    ->with(['unit', 'tenant', 'reporter'])
+                    ->where('urgency', MaintenanceUrgency::High->value)
+                    ->whereNull('handled_at')
+                    ->whereNotIn('status', [MaintenanceStatus::Done->value, MaintenanceStatus::Cancelled->value])
+                    ->latest()
+                    ->get();
+
+                if (request()->routeIs('office.maintenance.show')) {
+                    $current = request()->route('maintenance');
+                    $currentId = $current instanceof MaintenanceRequest ? $current->id : $current;
+                    $urgentMaintenance = $urgentMaintenance->reject(fn (MaintenanceRequest $item) => (int) $item->id === (int) $currentId);
+                }
+            }
+
             $view->with([
                 'currentUser' => $user,
                 'currentOrganization' => $context->organizationId() ? $context->organization() : null,
-                'currentMember' => $context->member(),
+                'currentMember' => $member,
+                'urgentMaintenance' => $urgentMaintenance,
                 'unreadNotifications' => $user ? $user->unreadNotifications()->count() : 0,
                 'recentNotifications' => $user ? $user->notifications()->latest()->limit(8)->get() : collect(),
             ]);
