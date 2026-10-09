@@ -1,15 +1,22 @@
 @extends('layouts.shell')
 @section('content')
-    <p class="text-sm text-muted">{{ $property->city }} {{ $property->address }}</p>
-    <h1 class="text-2xl font-semibold">{{ $property->name }}</h1>
+    <x-page-header :title="$property->name" :subtitle="trim(($property->city.' '.$property->address))">
+        <x-slot:actions>
+            @if (allows('units.manage'))
+                <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createUnit"><i class="bi bi-plus-lg" aria-hidden="true"></i> Ajouter un logement</button>
+            @endif
+        </x-slot:actions>
+    </x-page-header>
     @if ($property->description)
         <p class="mt-2 text-sm text-muted">{{ $property->description }}</p>
     @endif
     @if (allows('units.manage'))
-        <details class="card mt-4" open>
-            <summary class="cursor-pointer font-semibold">Ajouter un logement</summary>
-            <form method="POST" action="{{ route('office.units.store', $property) }}" enctype="multipart/form-data" class="mt-3 space-y-2">
+        <div class="modal fade" id="createUnit" tabindex="-1" aria-labelledby="createUnitLabel" @if ($errors->any()) data-open-on-load @endif>
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <form method="POST" action="{{ route('office.units.store', $property) }}" enctype="multipart/form-data" class="modal-content">
                 @csrf
+                <div class="modal-header"><h2 class="modal-title h5" id="createUnitLabel">Ajouter un logement</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button></div>
+                <div class="modal-body d-grid gap-2">
                 <input class="field" name="name" placeholder="Nom, ex. Appartement A" required>
                 <input class="field" name="reference" placeholder="Référence (facultatif)">
                 <select class="field" name="type">
@@ -29,9 +36,11 @@
                     </select>
                 </div>
                 <input class="field" type="file" name="photo" accept="image/*">
-                <button class="btn btn-primary w-full">Ajouter</button>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Annuler</button><button class="btn btn-primary">Ajouter</button></div>
             </form>
-        </details>
+            </div>
+        </div>
     @endif
     <div class="mt-4 space-y-2">
         @foreach ($property->units as $unit)

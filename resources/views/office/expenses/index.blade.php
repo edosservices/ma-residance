@@ -1,9 +1,19 @@
 @extends('layouts.shell')
 @section('content')
-    <h1 class="text-2xl font-semibold">Dépenses</h1>
+    <x-page-header title="Dépenses" subtitle="Charges validées, distinctes des encaissements">
+        <x-slot:actions>
+            @if (allows('expenses.manage'))
+                <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createExpense"><i class="bi bi-plus-lg" aria-hidden="true"></i> Nouvelle dépense</button>
+            @endif
+        </x-slot:actions>
+    </x-page-header>
     @if (allows('expenses.manage'))
-        <form method="POST" action="{{ route('office.expenses.store') }}" enctype="multipart/form-data" class="card mt-4 space-y-2">
+        <div class="modal fade" id="createExpense" tabindex="-1" aria-labelledby="createExpenseLabel" @if ($errors->any()) data-open-on-load @endif>
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <form method="POST" action="{{ route('office.expenses.store') }}" enctype="multipart/form-data" class="modal-content">
             @csrf
+            <div class="modal-header"><h2 class="modal-title h5" id="createExpenseLabel">Nouvelle dépense</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button></div>
+            <div class="modal-body d-grid gap-2">
             <input class="field" name="amount" placeholder="Montant" required>
             <select class="field" name="currency">@foreach ($currencies as $currency)<option>{{ $currency }}</option>@endforeach</select>
             <select class="field" name="expense_category_id">@foreach ($categories as $category)<option value="{{ $category->id }}">{{ $category->name }}</option>@endforeach</select>
@@ -15,8 +25,11 @@
             <input class="field" name="payee" placeholder="Technicien ou fournisseur">
             <textarea class="field" name="comment" placeholder="Commentaire"></textarea>
             <input class="field" type="file" name="attachment">
-            <button class="btn btn-primary w-full">Enregistrer</button>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Annuler</button><button class="btn btn-primary">Enregistrer</button></div>
         </form>
+        </div>
+        </div>
     @endif
     <div class="mt-4 space-y-2">
         @foreach ($expenses as $expense)

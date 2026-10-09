@@ -28,6 +28,13 @@ class HousingController extends Controller
         ]);
     }
 
+    public function units()
+    {
+        $units = Unit::query()->with('property')->orderBy('name')->paginate(24);
+
+        return view('office.units.index', compact('units'));
+    }
+
     public function storeProperty(Request $request, CurrentContext $context, HousingService $housing)
     {
         $data = $request->validate([

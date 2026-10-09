@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('perm:properties.manage|units.manage')->group(function () {
             Route::get('/biens', [HousingController::class, 'index'])->name('properties.index');
+            Route::get('/logements', [HousingController::class, 'units'])->name('units.index');
             Route::post('/biens', [HousingController::class, 'storeProperty'])->middleware('perm:properties.manage')->name('properties.store');
             Route::get('/biens/{property}', [HousingController::class, 'showProperty'])->name('properties.show');
             Route::post('/biens/{property}/logements', [HousingController::class, 'storeUnit'])->middleware('perm:units.manage')->name('units.store');
@@ -167,6 +168,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->middleware('super')->name('admin.')->group(function () {
         Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
         Route::get('/organisations', [AdminController::class, 'organizations'])->name('organizations');
+        Route::post('/organisations', [AdminController::class, 'storeOrganization'])->name('organizations.store');
         Route::post('/organisations/{organization}/statut', [AdminController::class, 'organizationStatus'])->name('organizations.status');
         Route::get('/utilisateurs', [AdminController::class, 'users'])->name('users');
         Route::post('/utilisateurs/{user}/statut', [AdminController::class, 'userStatus'])->name('users.status');

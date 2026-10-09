@@ -1,6 +1,12 @@
 @extends('layouts.shell')
 @section('content')
-    <h1 class="text-2xl font-semibold">Paiements</h1>
+    <x-page-header title="Paiements" subtitle="Déclarations, validations et corrections">
+        <x-slot:actions>
+            @if (allows('payments.validate') || allows('collections.record'))
+                <a class="btn btn-primary" href="{{ route('office.payments.create') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Enregistrer un paiement</a>
+            @endif
+        </x-slot:actions>
+    </x-page-header>
     <div class="mt-4 space-y-2">
         @foreach ($payments as $payment)
             <a class="card block" href="{{ route('office.payments.show', $payment) }}">

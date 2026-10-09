@@ -22,7 +22,8 @@ class EnsureSuperAdmin
             'shellNav' => 'partials.nav-admin',
             'home' => route('admin.dashboard'),
             'alerts' => route('admin.audit'),
-            'eyebrow' => 'Administration',
+            'eyebrow' => 'Super Admin',
+            'shellRole' => 'admin',
         ]);
 
         return $next($request);

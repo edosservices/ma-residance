@@ -37,6 +37,11 @@ class Organization extends Model
         return $this->hasMany(Unit::class);
     }
 
+    public function tenants(): HasMany
+    {
+        return $this->hasMany(Tenant::class);
+    }
+
     public function preference(string $key, mixed $default = null): mixed
     {
         $defaults = config('residence.organization_defaults', []);

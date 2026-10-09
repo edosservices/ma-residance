@@ -1,16 +1,20 @@
 @php
     $links = [
-        [route('portal.dashboard'), 'Accueil', request()->routeIs('portal.dashboard')],
-        [route('portal.invoices.index'), 'Factures', request()->routeIs('portal.invoices.*')],
-        [route('portal.maintenance.index'), 'Incident', request()->routeIs('portal.maintenance.*')],
-        [route('portal.messages.index'), 'Messages', request()->routeIs('portal.messages.*')],
-        [route('portal.notifications.index'), 'Alertes', request()->routeIs('portal.notifications*')],
+        ['portal.dashboard', route('portal.dashboard'), 'Tableau de bord', 'house'],
+        ['portal.contract', route('portal.contract'), 'Mon contrat', 'file-earmark-text'],
+        ['portal.invoices.*', route('portal.invoices.index'), 'Factures', 'receipt'],
+        ['portal.maintenance.*', route('portal.maintenance.index'), 'Maintenance', 'tools'],
+        ['portal.messages.*', route('portal.messages.index'), 'Messages', 'chat-dots'],
+        ['portal.notifications*', route('portal.notifications.index'), 'Notifications', 'bell'],
+        ['portal.moveout.*', route('portal.moveout.create'), 'Départ', 'box-arrow-right'],
     ];
 @endphp
-<nav class="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-card/95 backdrop-blur">
-    <div class="mx-auto flex max-w-3xl justify-around px-1 py-2">
-        @foreach ($links as [$url, $label, $active])
-            <a href="{{ $url }}" class="rounded-xl px-2 py-2 text-xs font-semibold {{ $active ? 'text-brand' : 'text-muted' }}">{{ $label }}</a>
-        @endforeach
-    </div>
+<nav class="app-nav" aria-label="Espace locataire">
+    <p class="app-nav-label">Mon logement</p>
+    @foreach ($links as [$pattern, $url, $text, $icon])
+        <a class="app-nav-link {{ request()->routeIs($pattern) ? 'is-active' : '' }}" href="{{ $url }}">
+            <i class="bi bi-{{ $icon }}" aria-hidden="true"></i>
+            <span>{{ $text }}</span>
+        </a>
+    @endforeach
 </nav>

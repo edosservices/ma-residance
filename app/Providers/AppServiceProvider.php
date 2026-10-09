@@ -40,7 +40,7 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Paginator::useTailwind();
+        Paginator::useBootstrapFive();
 
         foreach ([
             Property::class, Unit::class, Tenant::class, Contract::class, Invoice::class,
@@ -58,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
                 'currentOrganization' => $context->organizationId() ? $context->organization() : null,
                 'currentMember' => $context->member(),
                 'unreadNotifications' => $user ? $user->unreadNotifications()->count() : 0,
+                'recentNotifications' => $user ? $user->notifications()->latest()->limit(8)->get() : collect(),
             ]);
         });
     }
