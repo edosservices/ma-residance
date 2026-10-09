@@ -15,15 +15,21 @@
     <meta name="theme-color" content="{{ $themeColor }}">
     <title>@yield('document-title', 'Ma Résidence')</title>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    @include('partials.pwa')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="theme-{{ $shellTheme }}">
     <div class="app-shell">
         <aside class="app-sidebar d-none d-lg-flex flex-column">
             <x-logo :href="$home ?? route('home')" class="mb-3" />
-            @isset($shellNav)
-                @include($shellNav)
-            @endisset
+            <div class="app-nav-scroll">
+                @isset($shellNav)
+                    @include($shellNav)
+                @endisset
+            </div>
+            @if ($currentUser)
+                @include('partials.account-menu')
+            @endif
         </aside>
         <div class="app-main">
             <header class="app-topbar">
@@ -41,23 +47,28 @@
                     @if ($currentUser)
                         <x-notifications />
                         <div class="dropdown">
-                            <button class="icon-btn" type="button" data-bs-toggle="dropdown" aria-label="Compte de {{ $currentUser->name }}">
-                                <i class="bi bi-person" aria-hidden="true"></i>
+                            <button class="account-trigger" type="button" data-bs-toggle="dropdown" aria-label="Compte de {{ $currentUser->name }}">
+                                <span class="account-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($currentUser->name, 0, 1)) }}</span>
+                                <span class="d-none d-md-inline text-start">
+                                    <strong>{{ $currentUser->name }}</strong>
+                                    <small>{{ $eyebrow ?? 'Compte' }}</small>
+                                </span>
+                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
                             </button>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <div class="px-3 py-2">
-                                    <strong class="d-block">{{ $currentUser->name }}</strong>
-                                    <span class="small text-muted">{{ $eyebrow ?? $currentUser->phone }}</span>
-                                </div>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button class="dropdown-item"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>Se déconnecter</button>
-                                </form>
+                            <div class="dropdown-menu dropdown-menu-end account-dropdown">
+                                @include('partials.account-menu')
                             </div>
                         </div>
                     @endif
                 </div>
             </header>
+            @if (($shellTheme ?? '') === 'tenant')
+                <nav class="portal-topnav d-none d-lg-block" aria-label="Espace locataire">
+                    @isset($shellNav)
+                        @include($shellNav)
+                    @endisset
+                </nav>
+            @endif
             <main class="app-content">
                 <x-flash />
                 @yield('content')
@@ -74,6 +85,9 @@
             @isset($shellNav)
                 @include($shellNav)
             @endisset
+            @if ($currentUser)
+                @include('partials.account-menu')
+            @endif
         </div>
     </div>
     @include('partials.quickbar')

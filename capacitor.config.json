@@ -1,0 +1,9 @@
+{
+    "appId": "cd.edosservices.maresidence",
+    "appName": "Ma Résidence",
+    "webDir": "public",
+    "server": {
+        "androidScheme": "https",
+        "cleartext": false
+    }
+}

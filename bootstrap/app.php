@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\ClearOrganizationContext;
+use App\Http\Middleware\PreventCachedPrivatePages;
 use App\Http\Middleware\EnsureOrganization;
 use App\Http\Middleware\EnsurePermission;
 use App\Http\Middleware\EnsureSuperAdmin;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'perm' => EnsurePermission::class,
             'tenant' => EnsureTenant::class,
             'super' => EnsureSuperAdmin::class,
+            'private' => PreventCachedPrivatePages::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

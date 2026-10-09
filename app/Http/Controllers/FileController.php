@@ -38,6 +38,13 @@ class FileController extends Controller
         }
 
         $user = $request->user();
+
+        if (str_starts_with($path, 'messages/')) {
+            abort_unless($this->messageParticipant($user->id, $path), 403);
+
+            return Storage::disk('local')->response($path);
+        }
+
         $member = OrganizationMember::withoutGlobalScopes()
             ->where('user_id', $user->id)
             ->where('organization_id', $organizationId)
@@ -61,6 +68,14 @@ class FileController extends Controller
             ?? MoveOutRequest::withoutGlobalScopes()->where('photo_path', $path)->value('organization_id')
             ?? Property::withoutGlobalScopes()->where('photo_path', $path)->value('organization_id')
             ?? Unit::withoutGlobalScopes()->where('photo_path', $path)->value('organization_id');
+    }
+
+    private function messageParticipant(int $userId, string $path): bool
+    {
+        return Message::withoutGlobalScopes()
+            ->where('attachment_path', $path)
+            ->whereHas('thread.participants', fn ($query) => $query->where('users.id', $userId))
+            ->exists();
     }
 
     private function tenantOwns(int $userId, int $organizationId, string $path): bool

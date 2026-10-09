@@ -6,6 +6,7 @@
     <meta name="theme-color" content="#0f6b43">
     <title>@yield('document-title', 'Ma Résidence')</title>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    @include('partials.pwa')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>

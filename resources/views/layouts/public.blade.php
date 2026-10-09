@@ -7,6 +7,7 @@
     <meta name="description" content="Ma Résidence centralise propriétés, locataires, contrats, loyers, dépenses et suivi financier pour chaque bailleur.">
     <title>@yield('document-title', 'Ma Résidence')</title>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    @include('partials.pwa')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
@@ -70,6 +71,8 @@
                         <a href="{{ route('register.landlord') }}"><i class="bi bi-building-add me-2" aria-hidden="true"></i>Inscription bailleur</a>
                         <a href="{{ route('register.tenant') }}"><i class="bi bi-person-add me-2" aria-hidden="true"></i>Inscription locataire</a>
                     </div>
+                    <button type="button" class="btn btn-ghost d-none mb-2" data-pwa-install>Installer l'application</button>
+                    <p class="small d-none mb-2" data-pwa-ios>Sur iPhone : Partager, puis « Sur l'écran d'accueil ».</p>
                     <a class="btn btn-light" href="tel:+243992749668">
                         <i class="bi bi-telephone" aria-hidden="true"></i>
                         <span>+243 992 749 668</span>

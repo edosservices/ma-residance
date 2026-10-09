@@ -23,7 +23,7 @@ class CommunicationController extends Controller
     {
         $threads = MessageThread::query()
             ->whereHas('participants', fn ($query) => $query->where('users.id', $context->member()->user_id))
-            ->with(['participants', 'messages' => fn ($query) => $query->latest()->limit(1)])
+            ->with(['participants', 'messages' => fn ($query) => $query->reorder()->latest('id')->limit(1)])
             ->latest('updated_at')
             ->get();
         $tenants = Tenant::query()->whereNotNull('user_id')->orderBy('name')->get();

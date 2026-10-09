@@ -1,21 +1,31 @@
 @extends('layouts.shell')
 @section('content')
-    <h1 class="text-2xl font-semibold">{{ $thread->participants->first(fn ($user) => $user->id !== auth()->id())?->name }}</h1>
-    <div class="mt-4 space-y-2">
+    @php $peer = $thread->participants->first(fn ($user) => $user->id !== auth()->id()); @endphp
+    <x-page-header :title="$peer?->name ?? 'Conversation'" subtitle="Messages">
+        <x-slot:actions>
+            <a class="btn btn-ghost" href="{{ route('office.messages.index') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Toutes les conversations</a>
+        </x-slot:actions>
+    </x-page-header>
+    <div class="chat-log card">
         @foreach ($thread->messages as $message)
-            <div class="card {{ $message->sender_id === auth()->id() ? 'bg-sand' : '' }}">
-                <p class="text-xs text-muted">{{ $message->sender?->name }} · {{ $message->created_at->timezone(config('app.timezone'))->format('d/m H:i') }}</p>
-                <p class="mt-1 text-sm">{{ $message->body }}</p>
+            <article class="bubble {{ $message->sender_id === auth()->id() ? 'bubble-mine' : 'bubble-theirs' }}">
+                <p class="bubble-meta">{{ $message->sender?->name }} · {{ $message->created_at->timezone(config('app.timezone'))->format('d/m H:i') }}</p>
+                <p class="mb-0">{{ $message->body }}</p>
                 @if ($message->attachment_path)
-                    <a class="text-sm font-semibold text-brand" href="{{ file_url($message->attachment_path) }}">Pièce jointe</a>
+                    <a class="fw-semibold" href="{{ file_url($message->attachment_path) }}">Pièce jointe</a>
                 @endif
-            </div>
+            </article>
         @endforeach
     </div>
-    <form method="POST" action="{{ route('office.messages.reply', $thread) }}" enctype="multipart/form-data" class="mt-4 space-y-2">
+    <form method="POST" action="{{ route('office.messages.reply', $thread) }}" enctype="multipart/form-data" class="chat-composer card">
         @csrf
-        <textarea class="field" name="body" placeholder="Répondre" required></textarea>
-        <input class="field" type="file" name="attachment">
-        <button class="btn btn-primary w-full">Envoyer</button>
+        <label class="visually-hidden" for="reply-body">Répondre</label>
+        <textarea id="reply-body" class="field" name="body" placeholder="Répondre" required></textarea>
+        <div class="file-field">
+            <label class="btn btn-ghost mb-0" for="reply-file">Joindre un fichier</label>
+            <span class="file-name" data-file-name>Aucun fichier</span>
+            <input id="reply-file" class="visually-hidden" type="file" name="attachment" accept=".jpg,.jpeg,.png,.webp,.pdf">
+        </div>
+        <button class="btn btn-primary">Envoyer</button>
     </form>
 @endsection

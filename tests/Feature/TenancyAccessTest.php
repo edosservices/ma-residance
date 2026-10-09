@@ -78,7 +78,7 @@ class TenancyAccessTest extends TestCase
         $invoice = Invoice::withoutGlobalScopes()->firstOrFail();
 
         $this->actingAs($marie)->get(route('portal.invoices.show', $invoice))->assertForbidden();
-        $this->actingAs($jean)->get(route('portal.invoices.show', $invoice))->assertOk()->assertSee('theme-tenant', false);
+        $this->actingAs($jean)->get(route('portal.invoices.show', $invoice))->assertOk()->assertSee('theme-tenant', false)->assertSee('Se déconnecter');
 
         $other = app(RegistrationService::class)->registerLandlord('Amina', '0810000008', null, 'password', 'Chez Amina');
         $this->actingAs($other)->get(route('office.invoices.show', $invoice))->assertNotFound();

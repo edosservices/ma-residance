@@ -20,7 +20,7 @@
             @endphp
             <div class="chart-col" title="{{ $month['label'] }} · encaissé {{ money($month['collected'], $currency) }} · dépenses {{ money($month['expenses'], $currency) }}">
                 <div class="chart-pair">
-                    <span class="bar-in" style="height: {{ $collectedPx }}px"></span>
+                    <span class="bar-in {{ $loop->last ? 'is-current' : '' }}" style="height: {{ $collectedPx }}px"></span>
                     <span class="bar-out" style="height: {{ $expensePx }}px"></span>
                 </div>
                 <small>{{ $month['label'] }}</small>
