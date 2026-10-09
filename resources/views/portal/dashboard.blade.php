@@ -17,6 +17,7 @@
                     <p class="text-muted mb-2">Reste à payer · déjà réglé {{ money($paid, $currency) }}</p>
                     @if ($next)
                         <p class="text-muted mb-2">Prochaine échéance {{ $next->due_on->format('d/m/Y') }}</p>
+                        <a class="btn btn-primary" href="{{ route('portal.invoices.show', $next) }}">Envoyer la preuve de paiement</a>
                     @endif
                     <p class="mb-3">
                         <x-badge :tone="$daysLate > 0 ? 'bad' : 'good'">{{ $daysLate > 0 ? $daysLate.' jour'.($daysLate > 1 ? 's' : '').' de retard' : 'À jour' }}</x-badge>
@@ -52,9 +53,13 @@
             </div>
         </div>
         <div class="row g-3 mb-3">
-            <div class="col-12 col-md-4"><x-stat label="Loyer" :value="money($contract->rent_minor, $contract->currency)" icon="house" tone="mauve" href="{{ route('portal.contract') }}" /></div>
-            <div class="col-6 col-md-4"><x-stat label="Payé" :value="money($paid, $currency)" icon="check-circle" tone="green" /></div>
-            <div class="col-6 col-md-4"><x-stat label="Reste à payer" :value="money($due, $currency)" icon="exclamation-circle" tone="warn" href="{{ route('portal.invoices.index') }}" /></div>
+            <div class="col-12 col-md-4"><x-stat label="Déjà payé" :value="money($snapshot['settled'], $currency)" hint="Factures soldées" icon="check-circle" tone="green" /></div>
+            <div class="col-12 col-md-4"><x-stat label="À confirmer" :value="money($snapshot['awaiting'], $currency)" hint="Preuve envoyée, pas encore encaissée" icon="hourglass-split" tone="warn" href="{{ route('portal.invoices.index') }}" /></div>
+            <div class="col-12 col-md-4"><x-stat label="Approuvé" :value="money($snapshot['approved'], $currency)" hint="Validé par le bailleur, compté comme encaissé" icon="patch-check" tone="info" /></div>
+        </div>
+        <div class="mb-3">
+            <x-chart :series="$snapshot['series']" :currency="$currency" left="Approuvé" right="Attendu" right-class="bar-due" :show-net="false" />
+            <p class="small text-muted mt-2 mb-0">Approuvé suit la date de validation. Attendu suit la date d’échéance. Une preuve encore à confirmer n’entre pas dans Approuvé.</p>
         </div>
     @else
         <x-empty title="Pas encore de logement" text="Votre bail apparaîtra ici dès qu'il sera actif." />
@@ -78,12 +83,34 @@
     @if ($next)
         <p class="text-muted">Prochaine échéance {{ $next->due_on->format('d/m/Y') }}</p>
     @endif
-    <h2 class="h6 text-uppercase text-muted">Factures</h2>
+    <h2 class="h6 text-uppercase text-muted">Suivi des paiements</h2>
+    @forelse ($payments as $payment)
+        <article class="card mb-2">
+            <div class="d-flex justify-content-between gap-2">
+                <strong>{{ $payment->reference }}</strong>
+                <x-badge :tone="$payment->status->tone()">{{ $payment->status->label() }}</x-badge>
+            </div>
+            <p class="mb-0 mt-1 tabular">{{ money($payment->amount_minor, $payment->currency) }} · {{ $payment->invoice?->number }}</p>
+            <p class="mb-0 small text-muted">
+                @if ($payment->status->value === 'approved' && $payment->reviewed_at)
+                    Approuvé le {{ $payment->reviewed_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}
+                @elseif ($payment->status->value === 'pending')
+                    Preuve envoyée le {{ $payment->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}, en attente de confirmation
+                @else
+                    {{ $payment->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}
+                    @if ($payment->rejection_reason) · {{ $payment->rejection_reason }} @endif
+                @endif
+            </p>
+        </article>
+    @empty
+        <p class="text-muted">Aucun paiement déclaré. Envoyez une preuve depuis la facture à régler.</p>
+    @endforelse
+    <h2 class="h6 text-uppercase text-muted mt-4">Factures</h2>
     @forelse ($invoices as $invoice)
         <a class="card d-block mb-2" href="{{ route('portal.invoices.show', $invoice) }}">
             <div class="d-flex justify-content-between gap-2">
                 <strong>{{ $invoice->type->label() }} · {{ $invoice->period_key }}</strong>
-                <x-badge :tone="$invoice->status->tone()">{{ $invoice->status->label() }}</x-badge>
+                <x-badge :tone="$invoice->status->value === 'paid' ? 'good' : $invoice->status->tone()">{{ $invoice->status->value === 'paid' ? 'Déjà payé' : $invoice->status->label() }}</x-badge>
             </div>
             <p class="mb-0 mt-1 tabular">Payé {{ money($invoice->netPaidMinor(), $invoice->currency) }} · reste {{ money($invoice->balanceMinor(), $invoice->currency) }}</p>
         </a>

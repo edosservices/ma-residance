@@ -14,8 +14,9 @@
                     <p class="font-semibold">{{ $payment->reference }}</p>
                     <x-badge :tone="$payment->status->tone()">{{ $payment->status->label() }}</x-badge>
                 </div>
-                <p class="text-sm text-muted">{{ $payment->tenant->name }} · {{ $payment->method->label() }} · {{ $payment->kind->label() }}</p>
-                <p class="mt-1">{{ money($payment->amount_minor, $payment->currency) }}</p>
+                <p class="text-sm text-muted">{{ $payment->tenant->name }} · {{ $payment->method->label() }} · {{ $payment->kind->label() }}@if ($payment->proof_path) · preuve jointe @endif</p>
+                <p class="mt-1 mb-0">{{ money($payment->amount_minor, $payment->currency) }}</p>
+                <p class="small text-muted mb-0">{{ $payment->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }} · {{ $payment->declarer?->name }}</p>
             </a>
         @endforeach
     </div>

@@ -10,6 +10,8 @@ use App\Http\Controllers\Controller;
 use App\Models\ExchangeRate;
 use App\Models\OrganizationMember;
 use App\Models\Tenant;
+use App\Models\User;
+use App\Support\Phone;
 use App\Services\AuditLogger;
 use App\Services\Billing\ProrataManager;
 use App\Services\ExchangeRateService;
@@ -82,9 +84,19 @@ class PeopleController extends Controller
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string'],
         ]);
-        $members->create($context->organization(), $request->user(), $data);
+        $existed = User::query()->where('phone', Phone::normalize($data['phone']))->exists();
+        $member = $members->create($context->organization(), $request->user(), $data);
+        $member->load('user');
 
-        return back()->with('status', 'Collaborateur ajouté.');
+        return back()
+            ->with('status', 'Collaborateur ajouté. Remettez-lui ses identifiants en main propre.')
+            ->with('access_slip', [
+                'name' => $member->user->name,
+                'phone' => $member->user->phone,
+                'role' => $member->role->label(),
+                'password' => $existed ? null : $data['password'],
+                'existing' => $existed,
+            ]);
     }
 
     public function updateMember(Request $request, OrganizationMember $member, MemberService $members)

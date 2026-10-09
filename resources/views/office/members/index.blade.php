@@ -1,36 +1,70 @@
 @extends('layouts.shell')
 @section('content')
-    <h1 class="text-2xl font-semibold">Équipe</h1>
-    <details class="card mt-4">
-        <summary class="cursor-pointer font-semibold">Ajouter un collaborateur</summary>
-        <form method="POST" action="{{ route('office.members.store') }}" class="mt-3 space-y-2">
+    <x-page-header title="Équipe" subtitle="Le bailleur crée le compte. Le collaborateur se connecte avec ce téléphone et ce mot de passe." />
+    @if (session('access_slip'))
+        @php $slip = session('access_slip'); @endphp
+        <article class="card access-slip mb-3">
+            <p class="kicker">Identifiants à remettre en main propre</p>
+            <p class="mb-2">Ces informations ne seront plus affichées. Notez-les avant de quitter la page.</p>
+            <p class="mb-1"><strong>{{ $slip['name'] }}</strong> · {{ $slip['role'] }}</p>
+            <p class="mb-1">Identifiant : <strong>{{ $slip['phone'] }}</strong></p>
+            @if ($slip['password'])
+                <p class="mb-0">Mot de passe : <strong>{{ $slip['password'] }}</strong></p>
+            @else
+                <p class="mb-0">Cette personne a déjà un compte. Elle se connecte avec son mot de passe actuel. Le mot de passe saisi ici n’a pas été enregistré.</p>
+            @endif
+        </article>
+    @endif
+    <details class="card" open>
+        <summary class="fw-semibold">Ajouter un collaborateur</summary>
+        <form method="POST" action="{{ route('office.members.store') }}" class="mt-3">
             @csrf
-            <input class="field" name="name" placeholder="Nom" required>
-            <input class="field" name="phone" placeholder="Téléphone" required>
-            <input class="field" name="email" placeholder="Email facultatif">
-            <input class="field" type="password" name="password" placeholder="Mot de passe initial" required>
-            <select class="field" name="role" id="role">
-                @foreach ($roles as $role)
-                    <option value="{{ $role->value }}">{{ $role->label() }}</option>
-                @endforeach
-            </select>
-            <p class="text-xs text-muted">Si le téléphone existe déjà, le mot de passe actuel est conservé.</p>
-            <div class="space-y-1">
+            <div class="field-group mb-2">
+                <label for="member-name">Nom</label>
+                <input id="member-name" class="field" name="name" value="{{ old('name') }}" required>
+                <span class="field-hint">Nom affiché dans l’équipe et sur les écritures.</span>
+            </div>
+            <div class="field-group mb-2">
+                <label for="member-phone">Téléphone, identifiant de connexion</label>
+                <input id="member-phone" class="field" name="phone" value="{{ old('phone') }}" required>
+                <span class="field-hint">C’est avec ce numéro que la personne ouvre son espace.</span>
+            </div>
+            <div class="field-group mb-2">
+                <label for="member-email">Email</label>
+                <input id="member-email" class="field" type="email" name="email" value="{{ old('email') }}">
+                <span class="field-hint">Facultatif. La connexion se fait avec le téléphone.</span>
+            </div>
+            <div class="field-group mb-2">
+                <label for="member-password">Mot de passe initial</label>
+                <input id="member-password" class="field" type="password" name="password" required>
+                <span class="field-hint">8 caractères minimum. Vous le transmettez vous-même. Il n’est plus affiché ensuite.</span>
+            </div>
+            <div class="field-group mb-2">
+                <label for="role">Rôle</label>
+                <select class="field" name="role" id="role">
+                    @foreach ($roles as $role)
+                        <option value="{{ $role->value }}" @selected(old('role') === $role->value)>{{ $role->label() }}</option>
+                    @endforeach
+                </select>
+                <span class="field-hint">Le rôle fixe les droits possibles. Vous pouvez en retirer ensuite.</span>
+            </div>
+            <p class="small text-muted">Si le téléphone existe déjà, le mot de passe actuel est conservé et le rôle est ajouté à cette organisation.</p>
+            <div class="mb-3">
                 @foreach ($permissions as $permission)
-                    <label class="flex items-center gap-2 text-sm" data-cap="{{ $permission->value }}">
+                    <label class="d-flex align-items-center gap-2 small mb-1" data-cap="{{ $permission->value }}">
                         <input type="checkbox" name="permissions[]" value="{{ $permission->value }}">
                         {{ $permission->label() }}
                     </label>
                 @endforeach
             </div>
-            <button class="btn btn-primary w-full">Créer l'accès</button>
+            <button class="btn btn-primary">Créer l'accès</button>
         </form>
     </details>
     <div class="mt-4 space-y-3">
         @foreach ($members as $member)
             <article class="card">
-                <p class="font-semibold">{{ $member->user->name }}</p>
-                <p class="text-sm text-muted">{{ $member->role->label() }} · {{ $member->user->phone }}</p>
+                <p class="font-semibold mb-0">{{ $member->user->name }}</p>
+                <p class="text-muted mb-0">{{ $member->role->label() }} · identifiant {{ $member->user->phone }}</p>
                 @if ($member->role->value !== 'owner')
                     <form method="POST" action="{{ route('office.members.update', $member) }}" class="mt-3 space-y-1">
                         @csrf
