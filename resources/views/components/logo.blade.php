@@ -1,15 +1,20 @@
-@props(['href' => null, 'compact' => false, 'tagline' => 'Gestion locative'])
-<a href="{{ $href ?? ($home ?? route('home')) }}" {{ $attributes->merge(['class' => 'brand']) }}>
+@props(['href' => null, 'compact' => false, 'tagline' => 'Gestion locative', 'tone' => 'dark'])
+<a href="{{ $href ?? ($home ?? route('home')) }}" {{ $attributes->merge(['class' => 'brand'.($tone === 'light' ? ' brand-light' : '')]) }}>
     <span class="brand-mark" aria-hidden="true">
         <svg viewBox="0 0 64 64" role="img">
-            <rect width="64" height="64" rx="16" fill="#0f6b43"/>
-            <path d="M14 30.5 32 16l18 14.5" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M20 29.5V46h24V29.5" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
-            <rect x="28" y="36" width="8" height="10" rx="1.5" fill="#f4eef8"/>
-            <circle cx="46" cy="18" r="5" fill="#69468f"/>
+            <rect width="64" height="64" rx="8" fill="#0F6B43"/>
+            <rect x="12" y="14" width="40" height="3" fill="#fff"/>
+            <rect x="15" y="22" width="8" height="22" rx="1" fill="#fff"/>
+            <rect x="28" y="22" width="8" height="22" rx="1" fill="#F4EEF8"/>
+            <rect x="41" y="22" width="8" height="22" rx="1" fill="#fff"/>
+            <rect x="12" y="47" width="40" height="3" fill="#69468F"/>
         </svg>
     </span>
-    @unless ($compact)
-        <span class="brand-name">Ma Résidence<small>{{ $tagline }}</small></span>
-    @endunless
+    @if (! $compact)
+        <span class="brand-name">Ma Résidence
+            @if ($tagline !== '')
+                <small>{{ $tagline }}</small>
+            @endif
+        </span>
+    @endif
 </a>

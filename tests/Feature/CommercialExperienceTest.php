@@ -17,9 +17,9 @@ class CommercialExperienceTest extends TestCase
     {
         $this->get(route('home'))
             ->assertOk()
-            ->assertSee('Gérez vos logements simplement avec Ma Résidence')
+            ->assertSee('La gestion immobilière, avec une nouvelle exigence.')
             ->assertSee('Commencer maintenant')
-            ->assertSee('Découvrir la solution')
+            ->assertSee('Découvrir la plateforme')
             ->assertSee('Multi-résidences');
     }
 
