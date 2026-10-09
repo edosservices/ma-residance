@@ -1,20 +1,26 @@
 @extends('layouts.shell')
 @section('content')
-    <h1 class="text-2xl font-semibold">{{ $thread->participants->first(fn ($user) => $user->id !== auth()->id())?->name }}</h1>
-    <div class="mt-4 space-y-2">
+    @php $peer = $thread->participants->first(fn ($user) => $user->id !== auth()->id()); @endphp
+    <x-page-header :title="$peer?->name ?? 'Conversation'" subtitle="Messages">
+        <x-slot:actions>
+            <a class="btn btn-ghost" href="{{ route('portal.messages.index') }}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Toutes les conversations</a>
+        </x-slot:actions>
+    </x-page-header>
+    <div class="chat-log card">
         @foreach ($thread->messages as $message)
-            <div class="card">
-                <p class="text-xs text-muted">{{ $message->sender?->name }} · {{ $message->created_at->timezone(config('app.timezone'))->format('d/m H:i') }}</p>
-                <p class="mt-1 text-sm">{{ $message->body }}</p>
+            <article class="bubble {{ $message->sender_id === auth()->id() ? 'bubble-mine' : 'bubble-theirs' }}">
+                <p class="bubble-meta">{{ $message->sender?->name }} · {{ $message->created_at->timezone(config('app.timezone'))->format('d/m H:i') }}</p>
+                <p class="mb-0">{{ $message->body }}</p>
                 @if ($message->attachment_path)
-                    <a class="mt-1 block text-sm font-semibold text-brand" href="{{ file_url($message->attachment_path) }}">Pièce jointe</a>
+                    <a class="fw-semibold" href="{{ file_url($message->attachment_path) }}">Pièce jointe</a>
                 @endif
-            </div>
+            </article>
         @endforeach
     </div>
-    <form method="POST" action="{{ route('portal.messages.reply', $thread) }}" class="mt-4 space-y-2">
+    <form method="POST" action="{{ route('portal.messages.reply', $thread) }}" class="chat-composer card">
         @csrf
-        <textarea class="field" name="body" required></textarea>
-        <button class="btn btn-primary w-full">Répondre</button>
+        <label class="visually-hidden" for="reply-body">Répondre</label>
+        <textarea id="reply-body" class="field" name="body" placeholder="Répondre" required></textarea>
+        <button class="btn btn-primary">Envoyer</button>
     </form>
 @endsection

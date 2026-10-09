@@ -30,6 +30,46 @@ document.addEventListener('click', (event) => {
     button.querySelector('i')?.classList.toggle('bi-eye-slash', show);
 });
 
+document.addEventListener('input', (event) => {
+    const filter = event.target.closest('[data-thread-filter]');
+
+    if (!filter) {
+        return;
+    }
+
+    const query = filter.value.trim().toLocaleLowerCase();
+
+    filter.closest('.inbox-list')?.querySelectorAll('[data-thread-row]').forEach((row) => {
+        row.hidden = query !== '' && !row.textContent.toLocaleLowerCase().includes(query);
+    });
+});
+
+let deferredInstall = null;
+
+window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferredInstall = event;
+    document.querySelectorAll('[data-pwa-install]').forEach((button) => {
+        button.hidden = false;
+        button.classList.remove('d-none');
+    });
+});
+
+document.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-pwa-install]');
+
+    if (!button || !deferredInstall) {
+        return;
+    }
+
+    deferredInstall.prompt();
+    await deferredInstall.userChoice;
+    deferredInstall = null;
+    document.querySelectorAll('[data-pwa-install]').forEach((item) => {
+        item.hidden = true;
+    });
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => {
         new bootstrap.Tooltip(element);
@@ -38,4 +78,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-open-on-load]').forEach((element) => {
         bootstrap.Modal.getOrCreateInstance(element).show();
     });
+
+    const ios = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    if (ios && !standalone) {
+        document.querySelectorAll('[data-pwa-ios]').forEach((hint) => hint.classList.remove('d-none'));
+    }
+
+    if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
 });
