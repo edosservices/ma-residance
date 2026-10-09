@@ -63,7 +63,11 @@
                 <strong>{{ $payment->reference }} · {{ money($payment->amount_minor, $payment->currency) }}</strong>
                 <x-badge :tone="$payment->status->tone()">{{ $payment->status->label() }}</x-badge>
             </div>
-            @include('partials.payment-trace', ['payment' => $payment])
+            @if (sees_trace())
+                @include('partials.payment-trace', ['payment' => $payment])
+            @else
+                <p class="text-muted mb-0 mt-2">Le détail de cette déclaration reste chez le bailleur.</p>
+            @endif
         </article>
     @empty
         <p class="text-muted">Aucun paiement enregistré sur cette facture.</p>

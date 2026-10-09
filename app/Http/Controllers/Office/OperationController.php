@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Office;
 
 use App\Enums\MaintenanceStatus;
 use App\Enums\MaintenanceUrgency;
+use App\Enums\MemberRole;
 use App\Http\Controllers\Controller;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
@@ -29,7 +30,7 @@ class OperationController extends Controller
     public function expenses(CurrentContext $context)
     {
         return view('office.expenses.index', [
-            'expenses' => Expense::query()->with('category', 'unit', 'property')->latest('spent_on')->paginate(20),
+            'expenses' => Expense::query()->with('category', 'unit', 'property', 'tenant', 'recorder')->latest('spent_on')->paginate(20),
             'categories' => ExpenseCategory::query()->orderBy('name')->get(),
             'properties' => Property::query()->orderBy('name')->get(),
             'units' => Unit::query()->orderBy('name')->get(),
@@ -82,7 +83,7 @@ class OperationController extends Controller
 
     public function maintenance()
     {
-        $items = MaintenanceRequest::query()->with('unit', 'tenant')->latest()->paginate(20);
+        $items = MaintenanceRequest::query()->with('unit', 'tenant', 'reporter')->latest()->paginate(20);
 
         return view('office.maintenance.index', [
             'items' => $items,
@@ -113,7 +114,7 @@ class OperationController extends Controller
     public function showMaintenance(MaintenanceRequest $maintenance)
     {
         $this->authorize('view', $maintenance);
-        $maintenance->load('unit', 'tenant', 'updates.user', 'assignee');
+        $maintenance->load('unit', 'tenant', 'updates.user', 'assignee', 'reporter', 'handler');
 
         return view('office.maintenance.show', [
             'item' => $maintenance,
@@ -147,6 +148,17 @@ class OperationController extends Controller
         ]);
 
         return back()->with('status', 'Intervention mise à jour.');
+    }
+
+    public function acceptMaintenance(Request $request, MaintenanceRequest $maintenance, CurrentContext $context, MaintenanceService $service)
+    {
+        $this->authorize('manage', $maintenance);
+        $member = $context->member();
+        abort_unless($member && in_array($member->role, [MemberRole::Owner, MemberRole::Manager], true), 403, 'Seul le bailleur ou le gérant peut accepter une urgence.');
+        $data = $request->validate(['note' => ['nullable', 'string', 'max:500']]);
+        $service->accept($maintenance, $request->user(), $data['note'] ?? null);
+
+        return back()->with('status', 'Urgence acceptée comme bien gérée. L\'alerte ne s\'affiche plus.');
     }
 
     public function showMoveOut(MoveOutRequest $moveOut, BillingService $billing)

@@ -27,6 +27,12 @@ class MemberService
         }
 
         return DB::transaction(function () use ($organization, $actor, $data, $role) {
+            $actorMember = $this->actorMember($organization->id, $actor);
+
+            if (! in_array($role, RoleMatrix::creatable($actorMember->role), true)) {
+                throw new DomainException('Le gérant ne peut créer que son agent, avec moins de droits.');
+            }
+
             $phone = Phone::normalize($data['phone']);
             $user = User::query()->where('phone', $phone)->first();
 
@@ -46,7 +52,9 @@ class MemberService
                 throw new DomainException('Cette personne fait déjà partie de l\'organisation.');
             }
 
-            $permissions = RoleMatrix::intersect($role, $data['permissions'] ?? RoleMatrix::defaults($role));
+            $grantable = RoleMatrix::grantable($actorMember->role, $role);
+            $requested = $data['permissions'] ?? ($actorMember->role === MemberRole::Manager ? $grantable : RoleMatrix::defaults($role));
+            $permissions = array_values(array_intersect($grantable, $requested));
 
             $member = OrganizationMember::withoutGlobalScopes()->create([
                 'organization_id' => $organization->id,
@@ -68,7 +76,17 @@ class MemberService
             throw new DomainException('Les droits du bailleur principal ne se restreignent pas.');
         }
 
-        $member->permissions = RoleMatrix::intersect($member->role, $permissions);
+        $actorMember = $this->actorMember($member->organization_id, $actor);
+        $this->assertCanManage($actorMember, $member);
+        $grantable = RoleMatrix::grantable($actorMember->role, $member->role);
+        $kept = array_values(array_filter(
+            $member->permissions ?? [],
+            fn (string $permission) => ! in_array($permission, $grantable, true),
+        ));
+        $member->permissions = array_values(array_unique([
+            ...$kept,
+            ...array_intersect($grantable, $permissions),
+        ]));
         $member->save();
         $member->load('user');
         $this->audit->log($member->organization_id, $actor, 'member.permissions', $member, 'A modifié les permissions de '.$member->user->name.'.', ['permissions' => $member->permissions]);
@@ -82,8 +100,38 @@ class MemberService
             throw new DomainException('Le bailleur principal ne peut pas être retiré ici.');
         }
 
+        $actorMember = $this->actorMember($member->organization_id, $actor);
+        $this->assertCanManage($actorMember, $member);
+
         $member->status = $active ? 'active' : 'suspended';
         $member->save();
         $this->audit->log($member->organization_id, $actor, 'member.status', $member, ($active ? 'A réactivé ' : 'A suspendu ').$member->user->name.'.');
+    }
+
+    private function actorMember(int $organizationId, User $actor): OrganizationMember
+    {
+        $member = OrganizationMember::withoutGlobalScopes()
+            ->where('organization_id', $organizationId)
+            ->where('user_id', $actor->id)
+            ->first();
+
+        if ($member === null) {
+            throw new DomainException('Seul un membre de l\'organisation peut gérer l\'équipe.');
+        }
+
+        return $member;
+    }
+
+    private function assertCanManage(OrganizationMember $actor, OrganizationMember $target): void
+    {
+        if ($actor->role === MemberRole::Owner) {
+            return;
+        }
+
+        if ($actor->role === MemberRole::Manager && $target->role === MemberRole::Collector) {
+            return;
+        }
+
+        throw new DomainException('Le gérant ne peut ajuster que son agent.');
     }
 }

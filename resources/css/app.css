@@ -576,6 +576,11 @@ select.field {
     background: var(--mr-green-soft);
 }
 
+.urgent-modal .modal-header {
+    background: var(--mr-bad-soft);
+    color: var(--mr-bad);
+}
+
 .field:focus {
     border-color: var(--mr-accent, var(--mr-green));
     outline: none;

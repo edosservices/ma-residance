@@ -87,6 +87,7 @@
             @endif
             <main class="app-content">
                 <x-flash />
+                @include('partials.urgent-maintenance')
                 @yield('content')
             </main>
         </div>

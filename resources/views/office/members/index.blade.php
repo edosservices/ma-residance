@@ -1,6 +1,6 @@
 @extends('layouts.shell')
 @section('content')
-    <x-page-header title="Équipe" subtitle="Le bailleur crée le compte. Le collaborateur se connecte avec ce téléphone et ce mot de passe." />
+    <x-page-header title="Équipe" :subtitle="$actor->role->value === 'manager' ? 'Le gérant crée uniquement son agent, avec moins de droits que le bailleur.' : 'Le bailleur crée le compte et choisit les droits. Le collaborateur se connecte avec ce téléphone et ce mot de passe.'" />
     @if (session('access_slip'))
         @php $slip = session('access_slip'); @endphp
         <article class="card access-slip mb-3">
@@ -46,7 +46,7 @@
                         <option value="{{ $role->value }}" @selected(old('role') === $role->value)>{{ $role->label() }}</option>
                     @endforeach
                 </select>
-                <span class="field-hint">Le rôle fixe les droits possibles. Vous pouvez en retirer ensuite.</span>
+                <span class="field-hint">{{ $actor->role->value === 'manager' ? 'Un seul rôle : votre agent de recouvrement.' : 'Le rôle fixe les droits possibles. La traçabilité se coche à part.' }}</span>
             </div>
             <p class="small text-muted">Si le téléphone existe déjà, le mot de passe actuel est conservé et le rôle est ajouté à cette organisation.</p>
             <div class="mb-3">
@@ -65,14 +65,23 @@
             <article class="card">
                 <p class="font-semibold mb-0">{{ $member->user->name }}</p>
                 <p class="text-muted mb-0">{{ $member->role->label() }} · identifiant {{ $member->user->phone }}</p>
-                @if ($member->role->value !== 'owner')
+                @php
+                    $canEdit = $actor->role->value === 'owner'
+                        ? $member->role->value !== 'owner'
+                        : $member->role->value === 'collector';
+                    $editablePermissions = $actor->role->value === 'owner'
+                        ? $matrix[$member->role->value]
+                        : \App\Support\RoleMatrix::grantable($actor->role, $member->role);
+                @endphp
+                @if ($canEdit)
                     <form method="POST" action="{{ route('office.members.update', $member) }}" class="mt-3 space-y-1">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="permissions_form" value="1">
                         @foreach ($permissions as $permission)
-                            @if (in_array($permission->value, $matrix[$member->role->value], true))
+                            @if (in_array($permission->value, $editablePermissions, true))
                                 <label class="flex items-center gap-2 text-sm">
-                                    <input type="checkbox" name="permissions[]" value="{{ $permission->value }}" @checked(in_array($permission->value, $member->permissions ?? $matrix[$member->role->value], true))>
+                                    <input type="checkbox" name="permissions[]" value="{{ $permission->value }}" @checked(in_array($permission->value, $member->permissions ?? $editablePermissions, true))>
                                     {{ $permission->label() }}
                                 </label>
                             @endif
@@ -92,16 +101,18 @@
         @endforeach
     </div>
     <script>
-        const caps = @json($matrix);
+        const caps = @json($grantable);
+        const presets = @json($presets);
         const role = document.getElementById('role');
         const sync = () => {
             const allowed = caps[role.value] || [];
+            const preset = presets[role.value] || [];
             document.querySelectorAll('[data-cap]').forEach((label) => {
                 const input = label.querySelector('input');
                 const on = allowed.includes(input.value);
                 label.hidden = ! on;
                 input.disabled = ! on;
-                input.checked = on;
+                input.checked = on && preset.includes(input.value);
             });
         };
         role?.addEventListener('change', sync);

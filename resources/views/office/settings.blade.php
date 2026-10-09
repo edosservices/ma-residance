@@ -23,6 +23,11 @@
                 @endforeach
             </select>
         </label>
+        <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="share_declaration_trace" value="1" @checked($organization->preference('share_declaration_trace'))>
+            Montrer la traçabilité des déclarations au locataire
+        </label>
+        <p class="field-hint">Le détail reste chez le bailleur. Cochez pour l'afficher aussi dans l'espace locataire. Pour un collaborateur, utilisez le droit « Voir la traçabilité des déclarations ».</p>
         <button class="btn btn-primary w-full">Enregistrer</button>
     </form>
     <h2 class="mt-8 text-lg font-semibold">Taux de change</h2>

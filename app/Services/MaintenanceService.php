@@ -145,6 +145,32 @@ class MaintenanceService
         $this->logUpdate($request, $actor, null, $note, $photo);
     }
 
+    public function accept(MaintenanceRequest $request, User $actor, ?string $note = null): MaintenanceRequest
+    {
+        if ($request->urgency !== MaintenanceUrgency::High) {
+            throw new DomainException('Seule une déclaration urgente se clôt par cette acceptation.');
+        }
+
+        if (in_array($request->status, [MaintenanceStatus::Done, MaintenanceStatus::Cancelled], true) || $request->handled_at !== null) {
+            throw new DomainException('Cette urgence est déjà prise en charge.');
+        }
+
+        $request->handled_at = now();
+        $request->handled_by = $actor->id;
+        $request->handled_note = $note;
+        $request->save();
+        $this->logUpdate($request, $actor, null, $note ?: 'Accepté comme bien géré.', null);
+        $this->audit->log(
+            $request->organization_id,
+            $actor,
+            'maintenance.accepted',
+            $request,
+            'A accepté que l\'urgence « '.$request->title.' » est bien gérée.',
+        );
+
+        return $request;
+    }
+
     private function logUpdate(MaintenanceRequest $request, User $actor, ?MaintenanceStatus $status, ?string $note, ?string $photo, ?int $expenseId = null): void
     {
         MaintenanceUpdate::withoutGlobalScopes()->create([

@@ -21,6 +21,7 @@ return [
         'move_out_notice_days' => 3,
         'default_currency' => 'USD',
         'enabled_currencies' => ['USD', 'CDF'],
+        'share_declaration_trace' => false,
     ],
 
     'unit_types' => [

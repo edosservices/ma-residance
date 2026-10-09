@@ -60,4 +60,9 @@ class Expense extends Model
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    public function recorder(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'recorded_by');
+    }
 }

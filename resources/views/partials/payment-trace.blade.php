@@ -1,5 +1,16 @@
 <ol class="payment-trace mt-3">
     <li>
+        <strong>Déclaration</strong>
+        <span>
+            {{ $payment->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }}
+            · {{ $payment->declarer?->name ?? 'Déclarant' }}
+            · {{ $payment->tenant?->name }}
+            @if ($payment->invoice) · facture {{ $payment->invoice->number }} @endif
+            · {{ $payment->method->label() }}
+            · {{ money($payment->amount_minor, $payment->currency) }}
+        </span>
+    </li>
+    <li>
         <strong>Preuve envoyée</strong>
         <span>{{ $payment->created_at->timezone(config('app.timezone'))->format('d/m/Y H:i') }} · {{ $payment->declarer?->name ?? 'Déclarant' }}</span>
     </li>
