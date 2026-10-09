@@ -430,12 +430,13 @@ a.stat-card:hover {
 
 .stat-card .label {
     display: block;
-    max-width: calc(100% - 2.4rem);
+    max-width: calc(100% - 2.6rem);
     color: var(--mr-muted);
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-size: 0.84rem;
+    font-weight: 650;
+    letter-spacing: 0;
+    line-height: 1.25;
+    text-transform: none;
 }
 
 .stat-card .value {
@@ -444,7 +445,9 @@ a.stat-card:hover {
     font-weight: 750;
     letter-spacing: -0.03em;
     line-height: 1.2;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .stat-card .hint {
@@ -453,11 +456,16 @@ a.stat-card:hover {
     font-size: 0.84rem;
 }
 
-.stat-green { box-shadow: inset 3px 0 0 var(--mr-green); }
-.stat-mauve { box-shadow: inset 3px 0 0 var(--mr-mauve); }
-.stat-warn { box-shadow: inset 3px 0 0 #d0891f; }
-.stat-bad { box-shadow: inset 3px 0 0 var(--mr-bad); }
-.stat-info { box-shadow: inset 3px 0 0 var(--mr-info); }
+.stat-green { background: #e5f6ec; border-color: #b7e0c8; }
+.stat-mauve { background: #f4eaf8; border-color: #e0d0ee; }
+.stat-warn { background: #fff4e4; border-color: #f0ddb4; }
+.stat-bad { background: #fdeceb; border-color: #f3c7c4; }
+.stat-info { background: #e7f1fb; border-color: #c9dcf3; }
+.stat-green .stat-icon { background: #0f6b43; color: #fff; }
+.stat-mauve .stat-icon { background: #69468f; color: #fff; }
+.stat-warn .stat-icon { background: #d0891f; color: #fff; }
+.stat-bad .stat-icon { background: #a3261d; color: #fff; }
+.stat-info .stat-icon { background: #1d4e89; color: #fff; }
 
 .mr-badge {
     display: inline-flex;
@@ -511,6 +519,21 @@ a.card:hover {
 }
 
 textarea.field { min-height: 96px; }
+
+select.field {
+    height: 48px;
+    min-height: 48px;
+    max-height: 48px;
+}
+
+.field-hint {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--mr-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    line-height: 1.35;
+}
 
 .field:focus {
     border-color: var(--mr-accent, var(--mr-green));
@@ -1378,9 +1401,82 @@ body.theme-admin {
     --bs-link-hover-color: #0c2340;
 }
 
+body.theme-landlord {
+    --mr-sidebar: #0f6b43;
+    --mr-sidebar-ink: #f4fff8;
+    --mr-sidebar-muted: #d7f3e4;
+}
+
+body.theme-collector {
+    --mr-sidebar: #0a5c60;
+    --mr-sidebar-ink: #f3fffe;
+    --mr-sidebar-muted: #d4f4f4;
+}
+
 body.theme-landlord .app-sidebar,
 body.theme-collector .app-sidebar {
-    box-shadow: inset 3px 0 0 var(--mr-accent);
+    background: var(--mr-sidebar);
+    color: var(--mr-sidebar-ink);
+    border-right: 0;
+}
+
+body.theme-landlord .app-sidebar .brand,
+body.theme-landlord .app-sidebar .brand:hover,
+body.theme-landlord .app-sidebar .app-nav-link,
+body.theme-landlord .app-sidebar .account-name,
+body.theme-landlord .app-sidebar .account-link,
+body.theme-collector .app-sidebar .brand,
+body.theme-collector .app-sidebar .brand:hover,
+body.theme-collector .app-sidebar .app-nav-link,
+body.theme-collector .app-sidebar .account-name,
+body.theme-collector .app-sidebar .account-link {
+    color: var(--mr-sidebar-ink);
+}
+
+body.theme-landlord .app-sidebar .brand-mark,
+body.theme-collector .app-sidebar .brand-mark {
+    background: #fff;
+    border-radius: 10px;
+}
+
+body.theme-landlord .app-sidebar .brand-name small,
+body.theme-landlord .app-sidebar .app-nav-label,
+body.theme-landlord .app-sidebar .account-kicker,
+body.theme-landlord .app-sidebar .account-role,
+body.theme-collector .app-sidebar .brand-name small,
+body.theme-collector .app-sidebar .app-nav-label,
+body.theme-collector .app-sidebar .account-kicker,
+body.theme-collector .app-sidebar .account-role {
+    color: var(--mr-sidebar-muted);
+}
+
+body.theme-landlord .app-sidebar .app-nav-link:hover,
+body.theme-collector .app-sidebar .app-nav-link:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+body.theme-landlord .app-sidebar .app-nav-link.is-active,
+body.theme-collector .app-sidebar .app-nav-link.is-active {
+    background: #fff;
+    color: var(--mr-accent-dark);
+}
+
+body.theme-landlord .app-sidebar .app-nav-link.is-active i,
+body.theme-collector .app-sidebar .app-nav-link.is-active i {
+    color: var(--mr-accent);
+}
+
+body.theme-landlord .app-sidebar .account-menu,
+body.theme-collector .app-sidebar .account-menu {
+    border-top-color: rgba(255, 255, 255, 0.28);
+}
+
+body.theme-landlord .app-sidebar .btn-ghost,
+body.theme-collector .app-sidebar .btn-ghost {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.55);
+    color: #fff;
 }
 
 body.theme-tenant .app-sidebar {
