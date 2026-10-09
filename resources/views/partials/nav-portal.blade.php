@@ -6,7 +6,7 @@
         ['portal.maintenance.*', route('portal.maintenance.index'), 'Maintenance', 'tools'],
         ['portal.messages.*', route('portal.messages.index'), 'Messages', 'chat-dots'],
         ['portal.notifications*', route('portal.notifications.index'), 'Notifications', 'bell'],
-        ['portal.moveout.*', route('portal.moveout.create'), 'Départ', 'box-arrow-right'],
+        ['portal.moveout.*', route('portal.moveout.create'), 'Départ', 'house-dash'],
     ];
 @endphp
 <nav class="app-nav" aria-label="Espace locataire">

@@ -48,6 +48,7 @@ class EnsureTenant
             'alerts' => route('portal.notifications.index'),
             'eyebrow' => 'Espace locataire',
             'shellRole' => 'portal',
+            'shellTheme' => 'tenant',
         ]);
 
         return $next($request);

@@ -5,6 +5,14 @@
     --mr-green: #0f6b43;
     --mr-green-dark: #0b5535;
     --mr-green-soft: #e7f5ee;
+    --mr-accent: #0f6b43;
+    --mr-accent-dark: #0b5535;
+    --mr-accent-soft: #e7f5ee;
+    --mr-accent-ink: #0b5535;
+    --mr-nav-icon: #0f6b43;
+    --mr-sidebar: #ffffff;
+    --mr-sidebar-ink: #1a211c;
+    --mr-sidebar-muted: #5c665f;
     --mr-mauve: #69468f;
     --mr-mauve-dark: #51356f;
     --mr-mauve-soft: #f4eef8;
@@ -57,12 +65,12 @@ video {
 }
 
 :focus-visible {
-    outline: 3px solid #cbb6e4;
+    outline: 3px solid #1a211c;
     outline-offset: 2px;
 }
 
 a {
-    color: var(--mr-green-dark);
+    color: var(--mr-accent-dark, var(--mr-green-dark));
 }
 
 .app-shell {
@@ -78,7 +86,8 @@ a {
     top: 0;
     height: 100vh;
     overflow: auto;
-    background: #fff;
+    background: var(--mr-sidebar);
+    color: var(--mr-sidebar-ink);
     border-right: 1px solid var(--mr-line);
     padding: 1.1rem 0.85rem 1.5rem;
 }
@@ -242,8 +251,8 @@ a {
 
 .app-nav-link i {
     width: 1.25rem;
-    font-size: 1.1rem;
-    color: var(--mr-mauve);
+    font-size: 1.05rem;
+    color: var(--mr-nav-icon, var(--mr-green));
 }
 
 .app-nav-link:hover {
@@ -252,12 +261,12 @@ a {
 }
 
 .app-nav-link.is-active {
-    background: var(--mr-green-soft);
-    color: var(--mr-green-dark);
+    background: var(--mr-accent-soft, var(--mr-green-soft));
+    color: var(--mr-accent-ink, var(--mr-green-dark));
 }
 
 .app-nav-link.is-active i {
-    color: var(--mr-green);
+    color: var(--mr-accent, var(--mr-green));
 }
 
 .quickbar {
@@ -298,8 +307,8 @@ a {
 }
 
 .quickbar .is-active {
-    background: var(--mr-green-soft);
-    color: var(--mr-green-dark);
+    background: var(--mr-accent-soft, var(--mr-green-soft));
+    color: var(--mr-accent-ink, var(--mr-green-dark));
 }
 
 .notif-menu {
@@ -491,9 +500,9 @@ a.card:hover {
 textarea.field { min-height: 96px; }
 
 .field:focus {
-    border-color: var(--mr-green);
+    border-color: var(--mr-accent, var(--mr-green));
     outline: none;
-    box-shadow: 0 0 0 4px rgba(15, 107, 67, 0.14);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--mr-accent, var(--mr-green)) 24%, transparent);
 }
 
 .btn {
@@ -508,15 +517,15 @@ textarea.field { min-height: 96px; }
 }
 
 .btn-primary {
-    background: var(--mr-green);
-    border-color: var(--mr-green);
+    background: var(--mr-accent, var(--mr-green));
+    border-color: var(--mr-accent, var(--mr-green));
     color: #fff;
 }
 
 .btn-primary:hover,
 .btn-primary:focus {
-    background: var(--mr-green-dark);
-    border-color: var(--mr-green-dark);
+    background: var(--mr-accent-dark, var(--mr-green-dark));
+    border-color: var(--mr-accent-dark, var(--mr-green-dark));
     color: #fff;
 }
 
@@ -527,9 +536,9 @@ textarea.field { min-height: 96px; }
 }
 
 .btn-ghost:hover {
-    background: var(--mr-green-soft);
-    border-color: #b7dcc8;
-    color: var(--mr-green-dark);
+    background: var(--mr-accent-soft, var(--mr-green-soft));
+    border-color: color-mix(in srgb, var(--mr-accent, var(--mr-green)) 28%, white);
+    color: var(--mr-accent-ink, var(--mr-green-dark));
 }
 
 .btn-danger {
@@ -561,8 +570,8 @@ textarea.field { min-height: 96px; }
 }
 
 .period-pills a.is-active {
-    background: var(--mr-ink);
-    border-color: var(--mr-ink);
+    background: var(--mr-accent-dark, var(--mr-ink));
+    border-color: var(--mr-accent-dark, var(--mr-ink));
     color: #fff;
 }
 
@@ -854,7 +863,8 @@ textarea.field { min-height: 96px; }
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .brand-name small { display: none; }
+    .marketing-nav .brand-name small,
+    .app-topbar .brand-name small { display: none; }
 }
 
 @media (min-width: 390px) and (max-width: 560px) {
@@ -1191,7 +1201,7 @@ a.card,
     overflow: hidden;
 }
 
-.auth-aside img {
+.auth-aside > img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -1284,5 +1294,211 @@ a.card,
     .app-nav-link,
     .icon-btn {
         transition: none;
+    }
+}
+
+/* Thèmes de profil : une couleur dominante, les statuts restent sémantiques. */
+body.theme-landlord {
+    --mr-accent: #0f6b43;
+    --mr-accent-dark: #0b5535;
+    --mr-accent-soft: #e7f5ee;
+    --mr-accent-ink: #0b5535;
+    --mr-nav-icon: #0f6b43;
+    --bs-primary: #0f6b43;
+    --bs-primary-rgb: 15, 107, 67;
+    --bs-link-color: #0b5535;
+    --bs-link-hover-color: #08442a;
+}
+
+body.theme-tenant {
+    --mr-accent: #69468f;
+    --mr-accent-dark: #51356f;
+    --mr-accent-soft: #f4eef8;
+    --mr-accent-ink: #51356f;
+    --mr-nav-icon: #69468f;
+    --mr-sidebar: #f7f3fa;
+    --bs-primary: #69468f;
+    --bs-primary-rgb: 105, 70, 143;
+    --bs-link-color: #51356f;
+    --bs-link-hover-color: #3e2854;
+}
+
+body.theme-collector {
+    --mr-accent: #0a5c60;
+    --mr-accent-dark: #084548;
+    --mr-accent-soft: #e5f4f4;
+    --mr-accent-ink: #084548;
+    --mr-nav-icon: #0a5c60;
+    --mr-sidebar: #f3f8f8;
+    --bs-primary: #0a5c60;
+    --bs-primary-rgb: 10, 92, 96;
+    --bs-link-color: #084548;
+    --bs-link-hover-color: #063234;
+}
+
+body.theme-admin {
+    --mr-accent: #1d4e89;
+    --mr-accent-dark: #163e6e;
+    --mr-accent-soft: #e7f0fa;
+    --mr-accent-ink: #0c2340;
+    --mr-nav-icon: #8eb4e8;
+    --mr-sidebar: #0c1b33;
+    --mr-sidebar-ink: #e7eef8;
+    --mr-sidebar-muted: #9aafc9;
+    --bs-primary: #1d4e89;
+    --bs-primary-rgb: 29, 78, 137;
+    --bs-link-color: #163e6e;
+    --bs-link-hover-color: #0c2340;
+}
+
+body.theme-landlord .app-sidebar,
+body.theme-collector .app-sidebar {
+    box-shadow: inset 3px 0 0 var(--mr-accent);
+}
+
+body.theme-tenant .app-sidebar {
+    border-right-color: #e4d7ee;
+    box-shadow: inset 3px 0 0 #69468f;
+}
+
+body.theme-admin .app-sidebar {
+    border-right-color: #1a3054;
+}
+
+body.theme-admin .app-sidebar .brand,
+body.theme-admin .app-sidebar .brand:hover,
+body.theme-admin .app-nav-link {
+    color: var(--mr-sidebar-ink);
+}
+
+body.theme-admin .app-sidebar .brand-name small,
+body.theme-admin .app-nav-label {
+    color: var(--mr-sidebar-muted);
+}
+
+body.theme-admin .app-sidebar .app-nav-link:hover {
+    background: #132744;
+    color: #fff;
+}
+
+body.theme-admin .app-sidebar .app-nav-link.is-active,
+body.theme-admin .offcanvas .app-nav-link.is-active {
+    background: #1d4e89;
+    color: #fff;
+}
+
+body.theme-admin .app-sidebar .app-nav-link.is-active i,
+body.theme-admin .offcanvas .app-nav-link.is-active i {
+    color: #fff;
+}
+
+body.theme-admin .app-topbar {
+    box-shadow: inset 0 -2px 0 #1d4e89;
+}
+
+body.theme-tenant .app-topbar {
+    box-shadow: inset 0 -2px 0 #69468f;
+}
+
+body.theme-collector .app-topbar {
+    box-shadow: inset 0 -2px 0 #0a5c60;
+}
+
+body.theme-landlord .app-topbar {
+    box-shadow: inset 0 -2px 0 #0f6b43;
+}
+
+body.theme-admin .offcanvas {
+    background: #0c1b33;
+    color: #e7eef8;
+}
+
+body.theme-admin .offcanvas .btn-close {
+    filter: invert(1);
+}
+
+body.theme-admin .offcanvas .app-nav-link,
+body.theme-admin .offcanvas .offcanvas-title {
+    color: #e7eef8;
+}
+
+body.theme-admin .offcanvas .app-nav-label,
+body.theme-admin .offcanvas .text-muted {
+    color: #9aafc9 !important;
+}
+
+body.theme-admin .offcanvas .app-nav-link:hover {
+    background: #132744;
+    color: #fff;
+}
+
+body.theme-admin .app-sidebar :focus-visible,
+body.theme-admin .offcanvas :focus-visible {
+    outline-color: #fff;
+}
+
+.edos-logo {
+    display: block;
+    width: min(280px, 100%);
+    height: auto;
+    max-height: 92px;
+    object-fit: contain;
+    object-position: left center;
+}
+
+.auth-publisher {
+    margin-top: 1.75rem;
+}
+
+.auth-publisher p {
+    margin: 0.45rem 0 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.auth-panel .edos-logo {
+    width: min(220px, 100%);
+    max-height: 64px;
+    margin-top: 2rem;
+}
+
+.site-footer {
+    background: #050505;
+    color: #d5dbd6;
+    border-top: 0;
+}
+
+.site-footer .kicker {
+    color: #b7c4bc;
+}
+
+.site-footer a {
+    color: #fff;
+    font-weight: 500;
+}
+
+.site-footer a:hover {
+    color: #d7efe4;
+}
+
+.site-footer .footer-rule {
+    margin: 1.75rem 0 1rem;
+    border: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.site-footer .btn-light {
+    color: #102018;
+}
+
+.site-footer .btn-light:hover {
+    color: #0f6b43;
+}
+
+@media (max-width: 575.98px) {
+    .site-footer .btn {
+        width: 100%;
     }
 }

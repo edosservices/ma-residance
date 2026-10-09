@@ -3,12 +3,21 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#0f6b43">
+    @php
+        $shellTheme = $shellTheme ?? 'landlord';
+        $themeColor = [
+            'admin' => '#0c1b33',
+            'tenant' => '#69468f',
+            'collector' => '#0a5c60',
+            'landlord' => '#0f6b43',
+        ][$shellTheme] ?? '#0f6b43';
+    @endphp
+    <meta name="theme-color" content="{{ $themeColor }}">
     <title>@yield('document-title', 'Ma Résidence')</title>
     <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body class="theme-{{ $shellTheme }}">
     <div class="app-shell">
         <aside class="app-sidebar d-none d-lg-flex flex-column">
             <x-logo :href="$home ?? route('home')" class="mb-3" />

@@ -16,7 +16,11 @@
             <div class="auth-aside-copy">
                 <x-logo href="{{ route('home') }}" tone="light" tagline="Gestion locative" />
                 <h2>@yield('aside-title', 'La gestion immobilière, avec une nouvelle exigence.')</h2>
-                <p class="mb-0">@yield('aside-text', 'Propriétés, locataires, contrats, loyers et dépenses restent dans l’espace de chaque bailleur.')</p>
+                <p>@yield('aside-text', 'Propriétés, locataires, contrats, loyers et dépenses restent dans l’espace de chaque bailleur.')</p>
+                <div class="auth-publisher">
+                    <img class="edos-logo" src="{{ asset('images/edos-services-logo.png') }}" alt="EDOS SERVICES" width="2000" height="667">
+                    <p>Édité par EDOS SERVICES</p>
+                </div>
             </div>
         </aside>
         <main class="auth-main">
@@ -24,6 +28,7 @@
                 <x-logo href="{{ route('home') }}" class="d-lg-none mb-4" />
                 <x-flash />
                 @yield('content')
+                <img class="edos-logo d-lg-none" src="{{ asset('images/edos-services-logo.png') }}" alt="EDOS SERVICES" width="2000" height="667">
             </div>
         </main>
     </div>

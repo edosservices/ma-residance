@@ -48,7 +48,7 @@ class TenancyAccessTest extends TestCase
         ]);
 
         $this->actingAs($member->user)->get(route('office.contracts.index'))->assertForbidden();
-        $this->actingAs($member->user)->get(route('office.dashboard'))->assertOk()->assertSee('Recouvrement');
+        $this->actingAs($member->user)->get(route('office.dashboard'))->assertOk()->assertSee('Recouvrement')->assertSee('theme-collector', false);
         $this->actingAs($member->user)->get(route('office.tenants.index'))->assertOk();
     }
 
@@ -78,7 +78,7 @@ class TenancyAccessTest extends TestCase
         $invoice = Invoice::withoutGlobalScopes()->firstOrFail();
 
         $this->actingAs($marie)->get(route('portal.invoices.show', $invoice))->assertForbidden();
-        $this->actingAs($jean)->get(route('portal.invoices.show', $invoice))->assertOk();
+        $this->actingAs($jean)->get(route('portal.invoices.show', $invoice))->assertOk()->assertSee('theme-tenant', false);
 
         $other = app(RegistrationService::class)->registerLandlord('Amina', '0810000008', null, 'password', 'Chez Amina');
         $this->actingAs($other)->get(route('office.invoices.show', $invoice))->assertNotFound();
