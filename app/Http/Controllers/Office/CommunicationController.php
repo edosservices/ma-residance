@@ -21,11 +21,7 @@ class CommunicationController extends Controller
 {
     public function messages(CurrentContext $context)
     {
-        $threads = MessageThread::query()
-            ->whereHas('participants', fn ($query) => $query->where('users.id', $context->member()->user_id))
-            ->with(['participants', 'messages' => fn ($query) => $query->reorder()->latest('id')->limit(1)])
-            ->latest('updated_at')
-            ->get();
+        $threads = $this->participantThreads($context->member()->user_id);
         $tenants = Tenant::query()->whereNotNull('user_id')->orderBy('name')->get();
         $members = OrganizationMember::query()->with('user')->where('status', 'active')->where('user_id', '!=', $context->member()->user_id)->get();
 
@@ -56,8 +52,9 @@ class CommunicationController extends Controller
         $this->authorize('view', $thread);
         $thread->load(['messages.sender', 'participants']);
         $messages->markRead($thread, request()->user());
+        $threads = $this->participantThreads($context->member()->user_id);
 
-        return view('office.messages.show', ['thread' => $thread]);
+        return view('office.messages.show', ['thread' => $thread, 'threads' => $threads]);
     }
 
     public function reply(Request $request, MessageThread $thread, CurrentContext $context, MessageService $messages)
@@ -122,5 +119,14 @@ class CommunicationController extends Controller
         app(AuditLogger::class)->log($context->organization()->id, $request->user(), 'notification.sent', null, 'A envoyé « '.$data['title'].' » à '.$users->count().' locataire(s).');
 
         return back()->with('status', 'Notification envoyée.');
+    }
+
+    private function participantThreads(int $userId)
+    {
+        return MessageThread::query()
+            ->whereHas('participants', fn ($query) => $query->where('users.id', $userId))
+            ->with(['participants', 'messages' => fn ($query) => $query->reorder()->latest('id')->limit(1)])
+            ->latest('updated_at')
+            ->get();
     }
 }

@@ -33,6 +33,21 @@
             </div>
         </div>
         <div class="row g-3 mb-3">
+            <div class="col-12 col-lg-8">
+                <img class="portal-photo" src="{{ asset('images/brand/residence-facade.jpg') }}" alt="{{ $contract->unit->property->name ?? 'Résidence' }}">
+            </div>
+            <div class="col-12 col-lg-4">
+                <article class="card h-100">
+                    <p class="kicker">Mes contacts utiles</p>
+                    <strong class="d-block">{{ $owner?->user?->name ?? $currentOrganization->name }}</strong>
+                    <p class="text-muted mb-2">Bailleur</p>
+                    @if ($owner?->user?->phone || $currentOrganization->phone)
+                        <a class="fw-semibold" href="tel:{{ preg_replace('/\s+/', '', $owner?->user?->phone ?? $currentOrganization->phone) }}">{{ $owner?->user?->phone ?? $currentOrganization->phone }}</a>
+                    @endif
+                </article>
+            </div>
+        </div>
+        <div class="row g-3 mb-3">
             <div class="col-12 col-md-4"><x-stat label="Loyer" :value="money($contract->rent_minor, $contract->currency)" icon="house" tone="mauve" href="{{ route('portal.contract') }}" /></div>
             <div class="col-6 col-md-4"><x-stat label="Payé" :value="money($paid, $currency)" icon="check-circle" tone="green" /></div>
             <div class="col-6 col-md-4"><x-stat label="Reste à payer" :value="money($due, $currency)" icon="exclamation-circle" tone="warn" href="{{ route('portal.invoices.index') }}" /></div>

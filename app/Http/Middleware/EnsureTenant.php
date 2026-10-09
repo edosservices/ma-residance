@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use App\Enums\OrganizationStatus;
+use App\Models\Contract;
 use App\Models\Organization;
 use App\Models\Tenant;
 use App\Support\CurrentContext;
@@ -42,6 +43,19 @@ class EnsureTenant
         $request->session()->put('current_tenant_id', $tenant->id);
         $this->context->setOrganization($organization);
         $this->context->setTenant($tenant);
+        $contract = Contract::query()
+            ->with('unit.property')
+            ->where('tenant_id', $tenant->id)
+            ->whereIn('status', ['active', 'move_out_requested', 'pending'])
+            ->latest('start_date')
+            ->first();
+        $portalContractLine = $contract
+            ? trim(implode(' · ', array_filter([
+                $contract->unit?->property?->name,
+                $contract->unit?->name,
+                $contract->reference,
+            ])))
+            : null;
         view()->share([
             'shellNav' => 'partials.nav-portal',
             'home' => route('portal.dashboard'),
@@ -49,6 +63,7 @@ class EnsureTenant
             'eyebrow' => 'Espace locataire',
             'shellRole' => 'portal',
             'shellTheme' => 'tenant',
+            'portalContractLine' => $portalContractLine,
         ]);
 
         return $next($request);

@@ -13,6 +13,7 @@ use App\Http\Controllers\Office\HousingController;
 use App\Http\Controllers\Office\OperationController;
 use App\Http\Controllers\Office\PeopleController;
 use App\Http\Controllers\Portal\PortalController;
+use App\Support\HomeRedirect;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CatalogController::class, 'home'])->name('home');
@@ -30,6 +31,7 @@ Route::middleware('guest')->group(function () {
 Route::post('/deconnexion', [SessionController::class, 'destroy'])->middleware(['auth', 'private'])->name('logout');
 
 Route::middleware(['auth', 'private'])->group(function () {
+    Route::get('/mon-espace', fn () => HomeRedirect::for(request()->user()))->name('account.home');
     Route::get('/fichiers/{path}', [FileController::class, 'show'])->where('path', '.*')->name('files.show');
     Route::post('/logements/{unit}/demander', [CatalogController::class, 'request'])->name('catalog.request');
 

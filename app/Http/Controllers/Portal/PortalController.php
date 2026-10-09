@@ -58,9 +58,16 @@ class PortalController extends Controller
             ];
         }
 
+        $owner = OrganizationMember::withoutGlobalScopes()
+            ->with('user')
+            ->where('organization_id', $context->organization()->id)
+            ->where('role', 'owner')
+            ->first();
+
         return view('portal.dashboard', [
             'tenant' => $tenant,
             'contract' => $contract,
+            'owner' => $owner,
             'invoices' => $invoices,
             'charges' => $charges,
             'due' => $due,
@@ -243,8 +250,13 @@ class PortalController extends Controller
         $this->authorize('view', $thread);
         $thread->load('messages.sender', 'participants');
         $messages->markRead($thread, request()->user());
+        $threads = MessageThread::query()
+            ->whereHas('participants', fn ($query) => $query->where('users.id', $context->tenant()->user_id))
+            ->with(['participants', 'messages' => fn ($query) => $query->reorder()->latest('id')->limit(1)])
+            ->latest('updated_at')
+            ->get();
 
-        return view('portal.messages.show', compact('thread'));
+        return view('portal.messages.show', compact('thread', 'threads'));
     }
 
     public function reply(Request $request, MessageThread $thread, CurrentContext $context, MessageService $messages)

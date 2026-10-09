@@ -1,11 +1,11 @@
 @php
     $links = [
-        ['portal.dashboard', route('portal.dashboard'), 'Tableau de bord', 'house'],
-        ['portal.contract', route('portal.contract'), 'Mon contrat', 'file-earmark-text'],
-        ['portal.invoices.*', route('portal.invoices.index'), 'Factures', 'receipt'],
-        ['portal.maintenance.*', route('portal.maintenance.index'), 'Maintenance', 'tools'],
+        ['portal.dashboard', route('portal.dashboard'), 'Accueil', 'house'],
+        ['portal.invoices.*', route('portal.invoices.index'), 'Mon solde', 'wallet2'],
+        ['portal.contract', route('portal.contract'), 'Mes documents', 'file-earmark-text'],
+        ['portal.maintenance.*', route('portal.maintenance.index'), 'Mes demandes', 'tools'],
         ['portal.messages.*', route('portal.messages.index'), 'Messages', 'chat-dots'],
-        ['portal.notifications*', route('portal.notifications.index'), 'Notifications', 'bell'],
+        ['portal.notifications*', route('portal.notifications.index'), 'Actualités', 'bell'],
         ['portal.moveout.*', route('portal.moveout.create'), 'Départ', 'house-dash'],
     ];
 @endphp

@@ -41,24 +41,37 @@
                 </div>
                 <div class="topbar-copy d-none d-lg-block">
                     <strong>{{ $currentOrganization->name ?? 'Ma Résidence' }}</strong>
-                    <span>{{ $eyebrow ?? '' }}</span>
+                    <span>{{ ($shellTheme ?? '') === 'tenant' ? ($portalContractLine ?? $eyebrow ?? '') : ($eyebrow ?? '') }}</span>
                 </div>
                 <div class="ms-auto d-flex align-items-center gap-2">
                     @if ($currentUser)
                         <x-notifications />
-                        <div class="dropdown">
-                            <button class="account-trigger" type="button" data-bs-toggle="dropdown" aria-label="Compte de {{ $currentUser->name }}">
-                                <span class="account-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($currentUser->name, 0, 1)) }}</span>
-                                <span class="d-none d-md-inline text-start">
-                                    <strong>{{ $currentUser->name }}</strong>
-                                    <small>{{ $eyebrow ?? 'Compte' }}</small>
-                                </span>
-                                <i class="bi bi-chevron-down" aria-hidden="true"></i>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-end account-dropdown">
-                                @include('partials.account-menu')
+                        @if (($shellTheme ?? '') === 'tenant')
+                            <div class="dropdown d-none d-sm-block">
+                                <button class="logout-inline" type="button" data-bs-toggle="dropdown" aria-label="Gérer le compte de {{ $currentUser->name }}">Gérer mon compte</button>
+                                <div class="dropdown-menu dropdown-menu-end account-dropdown">
+                                    @include('partials.account-menu')
+                                </div>
                             </div>
-                        </div>
+                            <form method="POST" action="{{ route('logout') }}" class="logout-inline-form">
+                                @csrf
+                                <button class="logout-inline" type="submit"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Se déconnecter</button>
+                            </form>
+                        @else
+                            <div class="dropdown">
+                                <button class="account-trigger" type="button" data-bs-toggle="dropdown" aria-label="Compte de {{ $currentUser->name }}">
+                                    <span class="account-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($currentUser->name, 0, 1)) }}</span>
+                                    <span class="d-none d-md-inline text-start">
+                                        <strong>{{ $currentUser->name }}</strong>
+                                        <small>{{ $eyebrow ?? 'Compte' }}</small>
+                                    </span>
+                                    <i class="bi bi-chevron-down" aria-hidden="true"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end account-dropdown">
+                                    @include('partials.account-menu')
+                                </div>
+                            </div>
+                        @endif
                     @endif
                 </div>
             </header>
