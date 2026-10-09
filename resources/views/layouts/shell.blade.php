@@ -20,7 +20,7 @@
 </head>
 <body class="theme-{{ $shellTheme }}">
     <div class="app-shell">
-        <aside class="app-sidebar d-none d-lg-flex flex-column">
+        <aside class="app-sidebar d-none d-xl-flex flex-column">
             <x-logo :href="$home ?? route('home')" class="sidebar-brand" />
             <div class="app-nav-frame">
                 <div class="app-nav-scroll">
@@ -36,21 +36,21 @@
         </aside>
         <div class="app-main">
             <header class="app-topbar">
-                <button class="icon-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#appNav" aria-controls="appNav" aria-label="Ouvrir le menu">
+                <button class="icon-btn d-xl-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#appNav" aria-controls="appNav" aria-label="Ouvrir le menu">
                     <i class="bi bi-list" aria-hidden="true"></i>
                 </button>
-                <div class="d-lg-none brand-top">
+                <div class="d-xl-none brand-top">
                     <x-logo :href="$home ?? route('home')" tagline="" />
                 </div>
-                <div class="topbar-copy d-none d-lg-block">
+                <div class="topbar-copy d-none d-xl-block">
                     <strong>{{ $currentOrganization->name ?? 'Ma Résidence' }}</strong>
                     <span>{{ ($shellTheme ?? '') === 'tenant' ? ($portalContractLine ?? $eyebrow ?? '') : ($eyebrow ?? '') }}</span>
                 </div>
-                <div class="ms-auto d-flex align-items-center gap-2">
+                <div class="topbar-tools">
                     @if ($currentUser)
                         <x-notifications />
                         @if (($shellTheme ?? '') === 'tenant')
-                            <div class="dropdown d-none d-sm-block">
+                            <div class="dropdown d-none d-xl-block">
                                 <button class="logout-inline" type="button" data-bs-toggle="dropdown" aria-label="Gérer le compte de {{ $currentUser->name }}">Gérer mon compte</button>
                                 <div class="dropdown-menu dropdown-menu-end account-dropdown">
                                     @include('partials.account-menu')
@@ -64,7 +64,7 @@
                             <div class="dropdown">
                                 <button class="account-trigger" type="button" data-bs-toggle="dropdown" aria-label="Compte de {{ $currentUser->name }}">
                                     <span class="account-avatar" aria-hidden="true">{{ mb_strtoupper(mb_substr($currentUser->name, 0, 1)) }}</span>
-                                    <span class="d-none d-md-inline text-start">
+                                    <span class="account-copy d-none d-xl-grid">
                                         <strong>{{ $currentUser->name }}</strong>
                                         <small>{{ $eyebrow ?? 'Compte' }}</small>
                                     </span>
@@ -79,7 +79,7 @@
                 </div>
             </header>
             @if (($shellTheme ?? '') === 'tenant')
-                <nav class="portal-topnav d-none d-lg-block" aria-label="Espace locataire">
+                <nav class="portal-topnav d-none d-xl-block" aria-label="Espace locataire">
                     @isset($shellNav)
                         @include($shellNav)
                     @endisset
